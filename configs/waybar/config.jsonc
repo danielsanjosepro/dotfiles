@@ -1,0 +1,173 @@
+{
+    "layer": "top",
+    "position": "top",
+    //"mod": "dock",
+    //"start-hidden": true,
+    "exclusive": true,
+    //"passthrough": false,
+    "gtk-layer-shell": true,
+    "height": 0,
+    "modules-left": [
+      "hyprland/workspaces"
+    ],
+    "modules-center": [
+      "clock",
+    ],
+    "modules-right": [
+         //"tray",
+        "backlight",
+        "network",
+        "bluetooth",
+        "pulseaudio",
+        "pulseaudio#microphone",
+        // ===
+        "custom/updates",
+        "idle_inhibitor",
+        "cpu",
+        // ===
+        "battery",
+    ],
+
+    "hyprland/window": {
+        "format": "{}"
+    },
+    "hyprland/workspaces": {
+        "disable-scroll": true,
+        //"all-outputs": true,
+        "on-click": "activate",
+        "format": "{icon}",
+        "format-icons": {
+          "1": "",
+          "2": "󰈹",
+          "3": "",
+          // "4": "",
+          "5": "",
+          "6": "",
+          // "7": "",
+          // "8": "",
+          // "9": "",
+          "10": "",
+        },
+        "persistent_workspaces": {
+          "1" : [],
+          "2" : [],
+          "3" : [],
+          "4" : [],
+          "5" : [],
+          "6" : [],
+          "7" : [],
+          "8" : [],
+          "9" : [],
+          "10" : [],
+        },
+        "sort-by-number": true,
+    },
+    "custom/updates": { // TODO checking updates pf the system
+        "format": "󰆍 {}",
+        "interval": 7200,                     // every two hours
+        "exec": "i=$(checkupdates); echo \"$i\" |wc -l; echo \"$i\" |column -t |tr '\n' '\r'",       // # of updates and tooltip details
+        "exec-if": "exit 0",                  // always run; consider advanced run conditions
+        "on-click": "alacritty -e sudo pacman -Syu", // update system
+        "signal": 8
+    },
+    "tray": {
+        "icon-size": 13,
+        "spacing": 10
+    },
+    "clock": {
+      "interval": 60,
+      "format": " {:%H:%M  %d/%m}",
+      "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+      "max-length": 25
+    },
+    //"clock": {
+        //"format": "{: %R   %d/%m}",
+        //"tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+    //},
+    "backlight": { // TODO
+        "device": "amd_backlight",
+        "format": "{icon}",
+        "format-icons": ["󱩎", "󱩏", "󱩐", "󱩑", "󱩒", "󱩓", "󱩔", "󱩕", "󱩖", "󰛨"], 
+        "on-scroll-down": "brightnessctl set 1%+",
+        "on-scroll-up": "brightnessctl set 1%-",
+        "tooltip-format": "{brightness}%"
+    },
+    "battery": {
+        "states": {
+            "good": 95,
+            "warning": 30,
+            "critical": 20
+        },
+        "format": "{icon} {capacity}%",
+        "format-charging": " {capacity}%",
+        "format-plugged": " {capacity}%",
+        "format-alt": "{time} {icon}",
+        "format-icons":[" ", " ", " ", " ", " " ], 
+    },
+    "bluetooth": {
+      	"format": " {status}",
+        "format-on": "", 
+      	"format-off": "󰂲",
+        "format-connected": "󰂱 {num_connections}",
+      	"format-connected-battery": "󰂱 {num_connections}",
+      	// "format-device-preference": [ "device1", "device2" ], // preference list deciding the displayed device
+      	"tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
+      	"tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
+      	"tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+      	"tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t{device_battery_percentage}%",
+        "on-click": "blueman-manager",
+        "on-scroll-down": "bluetoothctl power on",
+        "on-scroll-up": "bluetoothctl power off",
+      },
+    "network": {
+        "interface": "wlan0",
+        "format": "{ifname}",
+        "format-disconnected": "󰤭",
+        "format-wifi": "{icon}",
+        "format-icons": ["󰤟", "󰤢", "󰤥", "󰤨"],
+        "format-ethernet": "󰈀",
+        "tooltip-format": "{ifname} via {gwaddr} 󰊗",
+        "tooltip-format-wifi": "{essid} ({signalStrength}%)   󰁝 {bandwidthUpBytes} 󰁅 {bandwidthDownBytes}",
+        "tooltip-format-ethernet": "{ifname} ",
+        "tooltip-format-disconnected": "Disconnected",
+        "max-length": 50,
+    },
+    "cpu": {
+        "format": " {usage}%",
+    },
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "tooltip": false,
+        "format-muted": "󰝟",
+        "on-click": "pamixer -t",
+        "on-scroll-down": "pamixer -i 1",
+        "on-scroll-up": "pamixer -d 1",
+        "scroll-step": 0.25,
+        "format-icons": {
+            "headphone": "",
+            "hands-free": "",
+            "headset": "",
+            "phone": "",
+            "portable": "",
+            "car": "",
+            "default": ["", "", ""]
+        }
+    },
+    "pulseaudio#microphone": {
+        "format": "{format_source}",
+        "format-source": "󰍬 {volume}%",
+        "format-source-muted": "󰍭",
+        "on-click": "pamixer --default-source -t",
+        "on-scroll-up": "pamixer --default-source -i 1",
+        "on-scroll-down": "pamixer --default-source -d 1",
+        "scroll-step": 0.25,
+    },
+    "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+        "activated": "󰅶",
+        "deactivated": "󰾪"
+    },
+    "on-click": "source ~/.config/hypr/scripts/toggle_idle_inhibitor.sh",
+}
+}

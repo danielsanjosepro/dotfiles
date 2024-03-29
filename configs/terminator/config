@@ -1,0 +1,26 @@
+[global_config]
+[keybindings]
+[profiles]
+  [[default]]
+    background_darkness = 0.7
+    background_type = transparent
+    cursor_fg_color = "#000000"
+    cursor_bg_color = "#f6f5f4"
+    cursor_color_default = False
+    font = Source Code Pro Medium 18
+    foreground_color = "#f6f5f4"
+    show_titlebar = False
+    use_system_font = False
+    bold_is_bright = True
+    title_inactive_fg_color = "#f6f5f4"
+    title_inactive_bg_color = "#000000"
+[layouts]
+  [[default]]
+    [[[window0]]]
+      type = Window
+      parent = ""
+    [[[child1]]]
+      type = Terminal
+      parent = window0
+      profile = default
+[plugins]

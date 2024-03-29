@@ -1,0 +1,146 @@
+@import "mocha.css";
+@import "colors-waybar.css";
+
+@define-color backgroundWaybar alpha(@base, 0.8);
+@define-color foregroundWaybar @color11;
+@define-color activeButton @color11;
+
+* {
+  border: none;
+  border-radius: 0;
+  font-family: FiraCode Nerd Font, monospace;
+  font-size: 12px;
+  min-height: 0;
+}
+
+window#waybar {
+  background: rgba(21, 18, 27, 0);
+  color: @base;
+}
+
+tooltip {
+  background: @backgroundWaybar;
+  border-radius: 5px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #11111b;
+}
+
+#workspaces button {
+  color: @surface2;
+  padding: 5px;
+  margin-right: 5px;
+}
+
+#workspaces button.active {
+  color: @activeButton;
+  background: @surface0;
+  border-radius: 10px;
+}
+
+#workspaces button.focused {
+  color: #a6adc8;
+  background: @surface1;
+  border-radius: 10px;
+}
+
+#workspaces button.urgent {
+  color: #11111b;
+  background: @yellow;
+  border-radius: 10px;
+}
+
+#workspaces button:hover {
+  background: @surface1;
+  color: @color12;
+  border-radius: 10px;
+}
+
+#custom-language,
+#custom-updates,
+#custom-caffeine,
+#custom-weather,
+#window,
+#clock,
+#battery,
+#pulseaudio,
+#network,
+#workspaces,
+#tray,
+#bluetooth,
+#cpu,
+#idle_inhibitor,
+#backlight {
+  background: @backgroundWaybar;
+  color: @foregroundWaybar;
+  padding: 0px 10px;
+  margin: 3px 0px;
+  margin-top: 10px;
+}
+
+#tray {
+  border-radius: 10px;
+  margin-right: 10px;
+}
+
+#workspaces {
+  border-radius: 10px;
+  margin-left: 10px;
+  padding-right: 0px;
+  padding-left: 0px;
+}
+
+
+#custom-updates {
+  border-radius: 10px 0px 0px 10px;
+  border-left: 0px;
+  border-right: 0px;
+}
+
+#window {
+  border-radius: 10px;
+  margin-left: 60px;
+  margin-right: 60px;
+}
+
+#clock {
+  border-radius: 10px;
+  margin-left: 5px;
+  border-right: 0px;
+}
+
+#backlight {
+  border-radius: 10px 0px 0px 10px;
+}
+
+#network {
+  border-left: 0px;
+  border-right: 0px;
+  font-size: 12px;
+}
+
+#pulseaudio {
+  border-left: 0px;
+  border-right: 0px;
+}
+
+#pulseaudio.microphone {
+  border-radius: 0px 10px 10px 0px;
+  border-left: 0px;
+  border-right: 0px;
+  margin-right: 5px;
+}
+#cpu {
+  border-radius: 0px 10px 10px 0px;
+  border-left: 0px;
+  border-right: 0px;
+  margin-right: 5px;
+}
+
+#battery {
+  border-radius: 10px 10px 10px 10px;
+  border-left: 0px;
+  border-right: 0px;
+  margin-right: 10px;
+  border-right: 0px;
+}
