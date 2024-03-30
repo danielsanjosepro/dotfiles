@@ -1,8 +1,11 @@
 #!/bin/bash
 #
-hyprctl dispatch exec [workspace 1 silent] nautilus
-hyprctl dispatch exec [workspace 2 silent] firefox
-hyprctl dispatch exec [workspace 3] alacritty
-hyprctl dispatch exec [workspace 5 silent] alacritty
-hyprctl dispatch exec [workspace 6 silent] spotify
-hyprctl dispatch exec [workspace 10 silent] darktable
+hyprctl --batch "dispatch exec [workspace 1 silent] nautilus; \
+  dispatch exec [workspace 2 silent] firefox; \
+  dispatch exec [workspace 3 silent] alacritty -e nvim .; \
+  dispatch exec [workspace 5 silent] alacritty -e htop; \
+  dispatch exec [workspace 5 silent] alacritty; \
+  dispatch exec [workspace 6 silent] spotify; \
+  dispatch exec [workspace 6 silent] alacritty -e vis; \
+  dispatch exec [workspace 10 silent] darktable;"
+

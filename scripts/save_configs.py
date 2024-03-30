@@ -12,6 +12,8 @@ config_directories = [
     "nvim",
     "alacritty",
     "darktable",
+    "wal",
+    "vis",
 ]
 
 # We replace for each of this folders the config directories with the ones

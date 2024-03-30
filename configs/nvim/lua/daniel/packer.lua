@@ -99,5 +99,7 @@ return require('packer').startup(function(use)
 		 require("auto-save").setup {
 		 }
 	end,
+  -- todo hyghtlight
+  use 'folke/todo-comments.nvim'
 })
 end)

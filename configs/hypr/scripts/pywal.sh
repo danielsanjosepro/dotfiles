@@ -14,6 +14,10 @@ source ~/.config/waybar/launch.sh > /dev/null 2>&1 &
 # Run pyfox
 pywalfox update
 # Restart dunst
+killall dunst
+dunst -conf ~/.config/dunst/dunstrc &
+# Update cli-visualizer
+source ~/.config/vis/reload_colors.sh &
 
 # Get wallpaper name
 wallpaper=$(basename $(cat ~/.cache/wal/wal))

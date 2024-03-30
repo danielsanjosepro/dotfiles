@@ -36,6 +36,8 @@ yay_packages = [
     "checkupdates",  # Check for updates
     "grim",  # Screenshot utility
     "slurp",  # Select region for grim
+    "zsh",  # Zsh shell
+    "zsh-autosuggestions",  # Zsh autosuggestions
 ]
 
 for package in pacman_packages:
