@@ -22,6 +22,7 @@
         "pulseaudio#microphone",
         // ===
         "custom/updates",
+        "custom/keyboard",
         "idle_inhibitor",
         "cpu",
         // ===
@@ -69,6 +70,13 @@
         "exec-if": "exit 0",                  // always run; consider advanced run conditions
         "on-click": "alacritty -e sudo pacman -Syu", // update system
         "signal": 8
+    },
+    "custom/keyboard": {
+      "exec": "python3 ~/.config/waybar/scripts/get_layout.py",
+      "exec-if": "exit 0",
+      "on-click" : "hyprctl switchxkblayout at-translated-set-2-keyboard next",
+      "interval": 30,
+      "format": "󰘯 {}",
     },
     "tray": {
         "icon-size": 13,
@@ -139,7 +147,7 @@
         "format": "{icon} {volume}%",
         "tooltip": false,
         "format-muted": "󰝟",
-        "on-click": "pamixer -t",
+        "on-click": "pavucontrol",
         "on-scroll-down": "pamixer -i 1",
         "on-scroll-up": "pamixer -d 1",
         "scroll-step": 0.25,

@@ -11,7 +11,9 @@ swaylock \
 	--line-color 00000000 \
 	--inside-color 00000088 \
 	--separator-color 00000000 \
-   --text-color f5e0dc \
-   --inside-ver-color f5e0dc \
+  --text-color f5e0dc \
+  --inside-ver-color f5e0dc \
 	--grace 0 \
-	--fade-in 0.0 
+	--fade-in 0.0 \
+  --layout-bg-color 00000000 \
+  --layout-text-color f5e0dc88 \

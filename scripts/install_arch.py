@@ -38,6 +38,8 @@ yay_packages = [
     "slurp",  # Select region for grim
     "zsh",  # Zsh shell
     "zsh-autosuggestions",  # Zsh autosuggestions
+    "pavucontrol",  # Pulseaudio volume control
+    "ripgrep",  # Ripgrep for fast searching
 ]
 
 for package in pacman_packages:
