@@ -12,4 +12,18 @@ vim.keymap.set("n", "<C-d>", "<C-d>zz", {})
 -- Allow word replacement
 vim.keymap.set("n", "<leader>rw", ":%s/\\<<C-r><C-w>\\>//g<left><left>", {})
 -- Tab navigation
-vim.keymap.set("n", "<Tab>", "<C-W><C-W>", {})
+--vim.keymap.set("n", "<Tab>", "<C-W><C-W>", {})
+-- Remove search highlights
+vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>", {})
+-- Escape insert mode with jj
+vim.keymap.set("i", "jj", "<Esc>", {})
+vim.keymap.set("i", "jk", "<Esc>", {})
+-- Disable arrow keys
+vim.keymap.set("n", "<Up>", "<cmd>echo 'Use k to move up'<CR>", {})
+vim.keymap.set("n", "<Down>", "<cmd>echo 'Use j to move down'<CR>", {})
+vim.keymap.set("n", "<Left>", "<cmd>echo 'Use h to move left'<CR>", {})
+vim.keymap.set("n", "<Right>", "<cmd>echo 'Use l to move right'<CR>", {})
+-- Disable mouse
+-- TODO
+
+
