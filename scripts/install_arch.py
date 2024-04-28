@@ -40,6 +40,7 @@ yay_packages = [
     "zsh-autosuggestions",  # Zsh autosuggestions
     "pavucontrol",  # Pulseaudio volume control
     "ripgrep",  # Ripgrep for fast searching
+    "zoxide",  # Directory jumping
 ]
 
 for package in pacman_packages:

@@ -99,11 +99,9 @@ return require('packer').startup(function(use)
       require("auto-save").setup {
       }
     end,
-    -- todo hyghtlight
-    use 'folke/todo-comments.nvim',
-    -- For tmux and nvim integration
-    use {
-      "christoomey/vim-tmux-navigator",
-    }
   })
+  -- todo hyghtlight
+  use 'folke/todo-comments.nvim'
+  -- context highlight
+  use 'nvim-treesitter/nvim-treesitter-context'
 end)

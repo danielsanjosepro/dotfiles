@@ -3,6 +3,7 @@ wal -q -i ~/Pictures/Wallpaper/
 
 source ~/.cache/wal/colors.sh
 python3 ~/.config/wal/scripts/create_formats.py
+source ~/.config/wal/scripts/zellij_colors.sh
 
 # Copy color file to respective directories
 cp ~/.cache/wal/colors-waybar.css ~/.config/waybar/

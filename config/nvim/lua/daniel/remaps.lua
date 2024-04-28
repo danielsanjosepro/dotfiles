@@ -23,7 +23,10 @@ vim.keymap.set("n", "<Up>", "<cmd>echo 'Use k to move up'<CR>", {})
 vim.keymap.set("n", "<Down>", "<cmd>echo 'Use j to move down'<CR>", {})
 vim.keymap.set("n", "<Left>", "<cmd>echo 'Use h to move left'<CR>", {})
 vim.keymap.set("n", "<Right>", "<cmd>echo 'Use l to move right'<CR>", {})
+-- Also disable them in insert mode
+vim.keymap.set("i", "<Up>", "<cmd>echo 'Use k to move up'<CR>", {})
+vim.keymap.set("i", "<Down>", "<cmd>echo 'Use j to move down'<CR>", {})
+vim.keymap.set("i", "<Left>", "<cmd>echo 'Use h to move left'<CR>", {})
+vim.keymap.set("i", "<Right>", "<cmd>echo 'Use l to move right'<CR>", {})
 -- Disable mouse
--- TODO
-
-
+vim.opt.mouse = ""

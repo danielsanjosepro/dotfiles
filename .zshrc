@@ -24,6 +24,9 @@ source ~/.cache/wal/colors-tty.sh
 # If you come from bash you might have to change your $PATH.
  export PATH=$HOME/bin:/usr/local/bin:$PATH
 
+# Micromamba configuration
+export MAMBA_ROOT_PREFIX="$HOME/.micromamba"
+
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
@@ -134,3 +137,17 @@ fi
 set -o vi
 bindkey ^R history-incremental-search-backward 
 bindkey ^S history-incremental-search-forward
+eval "$(zoxide init zsh)"
+
+# >>> mamba initialize >>>
+# !! Contents within this block are managed by 'mamba init' !!
+export MAMBA_EXE='/usr/bin/micromamba';
+export MAMBA_ROOT_PREFIX='/home/daniel/.micromamba';
+__mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__mamba_setup"
+else
+    alias micromamba="$MAMBA_EXE"  # Fallback on help from mamba activate
+fi
+unset __mamba_setup
+# <<< mamba initialize <<<

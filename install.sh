@@ -9,6 +9,7 @@ ln -s ~/.dotfiles/config/wal ~/.config/wal
 ln -s ~/.dotfiles/config/vis ~/.config/vis
 ln -s ~/.dotfiles/config/dunst ~/.config/dunst
 ln -s ~/.dotfiles/config/hypr ~/.config/hypr
+ln -s ~/.dotfiles/config/zellij ~/.config/zellij
 
 # List of files to simlink
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
