@@ -6,14 +6,14 @@ swaylock \
 	--indicator-thickness 7 \
 	--effect-blur 7x5 \
 	--effect-vignette 0.5:0.5 \
-	--ring-color 8E9338 \
+	--ring-color {color11.strip} \
 	--key-hl-color ffffff \
 	--line-color 00000000 \
 	--inside-color 00000088 \
 	--separator-color 00000000 \
   --text-color f5e0dc \
-  --inside-ver-color 457886 \
+  --inside-ver-color {color13.strip} \
 	--grace 0 \
 	--fade-in 0.0 \
   --layout-bg-color 00000000 \
-  --layout-text-color 4D928F \
+  --layout-text-color {color14.strip} \
