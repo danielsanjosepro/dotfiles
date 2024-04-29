@@ -1,20 +1,22 @@
 @import "mocha.css";
 @import "colors-waybar.css";
 
-@define-color backgroundWaybar alpha(@base, 0.8);
+@define-color backgroundWaybar alpha(@base, 0.9);
+@define-color backgroundWaybarTransparent alpha(@base, 0.2);
 @define-color foregroundWaybar @color11;
 @define-color activeButton @color11;
 
+
 * {
   border: none;
-  border-radius: 0;
+  border-radius: 5px;
   font-family: FiraCode Nerd Font, monospace;
-  font-size: 12px;
+  font-size: 10px;
   min-height: 0;
 }
 
 window#waybar {
-  background: rgba(21, 18, 27, 0);
+  background: rgba(0, 0, 0, 0);
   color: @base;
 }
 
@@ -27,33 +29,34 @@ tooltip {
 }
 
 #workspaces button {
+  background: rgba(0, 0, 0, 0);
   color: @surface2;
-  padding: 5px;
-  margin-right: 5px;
+  padding: 2px 4px;
+  margin-right: 2px;
 }
 
 #workspaces button.active {
   color: @activeButton;
-  background: @surface0;
-  border-radius: 10px;
+  background: @backgroundWaybar;
+  border-radius: 5px;
 }
 
 #workspaces button.focused {
   color: #a6adc8;
   background: @surface1;
-  border-radius: 10px;
+  border-radius: 5px;
 }
 
 #workspaces button.urgent {
   color: #11111b;
   background: @yellow;
-  border-radius: 10px;
+  border-radius: 5px;
 }
 
 #workspaces button:hover {
   background: @surface1;
   color: @color12;
-  border-radius: 10px;
+  border-radius: 5px;
 }
 
 #custom-language,
@@ -66,7 +69,6 @@ tooltip {
 #battery,
 #pulseaudio,
 #network,
-#workspaces,
 #tray,
 #bluetooth,
 #cpu,
@@ -74,18 +76,28 @@ tooltip {
 #backlight {
   background: @backgroundWaybar;
   color: @foregroundWaybar;
-  padding: 0px 10px;
-  margin: 3px 0px;
-  margin-top: 10px;
+  padding: 1px 6px;
+  margin: 5px 0px 0px 0px;
+}
+
+
+#custom-keyboard,
+#bluetooth,
+#network,
+#pulseaudio,
+#idle_inhibitor{
+  border-radius: 0px;
 }
 
 #tray {
-  border-radius: 10px;
+  border-radius: 0px;
   margin-right: 10px;
 }
 
 #workspaces {
-  border-radius: 10px;
+  background: @backgroundWaybarTransparent;
+  margin: 5px 0px 0px 0px;
+  border-radius: 5px;
   margin-left: 10px;
   padding-right: 0px;
   padding-left: 0px;
@@ -93,25 +105,25 @@ tooltip {
 
 
 #custom-updates {
-  border-radius: 10px 0px 0px 10px;
+  border-radius: 5px 0px 0px 5px;
   border-left: 0px;
   border-right: 0px;
 }
 
 #window {
-  border-radius: 10px;
+  border-radius: 0px;
   margin-left: 60px;
   margin-right: 60px;
 }
 
 #clock {
-  border-radius: 10px;
+  border-radius: 5px;
   margin-left: 5px;
   border-right: 0px;
 }
 
 #backlight {
-  border-radius: 10px 0px 0px 10px;
+  border-radius: 5px 0px 0px 5px;
 }
 
 #network {
@@ -126,20 +138,20 @@ tooltip {
 }
 
 #pulseaudio.microphone {
-  border-radius: 0px 10px 10px 0px;
+  border-radius: 0px 5px 5px 0px;
   border-left: 0px;
   border-right: 0px;
   margin-right: 5px;
 }
 #cpu {
-  border-radius: 0px 10px 10px 0px;
+  border-radius: 0px 5px 5px 0px;
   border-left: 0px;
   border-right: 0px;
   margin-right: 5px;
 }
 
 #battery {
-  border-radius: 10px 10px 10px 10px;
+  border-radius: 5px 5px 5px 5px;
   border-left: 0px;
   border-right: 0px;
   margin-right: 10px;

@@ -11,7 +11,7 @@
       "hyprland/workspaces"
     ],
     "modules-center": [
-      "clock",
+      "clock"
     ],
     "modules-right": [
          //"tray",
@@ -26,7 +26,7 @@
         "idle_inhibitor",
         "cpu",
         // ===
-        "battery",
+        "battery"
     ],
 
     "hyprland/window": {
@@ -40,14 +40,10 @@
         "format-icons": {
           "1": "",
           "2": "󰈹",
-          "3": "",
-          // "4": "",
+          "3": "",
           "5": "",
-          "6": "",
-          // "7": "",
-          // "8": "",
-          // "9": "",
-          "10": "",
+          "6": " ",
+          "10": ""
         },
         "persistent_workspaces": {
           "1" : [],
@@ -59,9 +55,9 @@
           "7" : [],
           "8" : [],
           "9" : [],
-          "10" : [],
+          "10" : []
         },
-        "sort-by-number": true,
+        "sort-by-number": true
     },
     "custom/updates": { // TODO checking updates pf the system
         "format": "󰆍 {}",
@@ -76,11 +72,11 @@
       "exec-if": "exit 0",
       "on-click" : "hyprctl switchxkblayout at-translated-set-2-keyboard next",
       "interval": 30,
-      "format": "󰘯 {}",
+      "format": "󰘯 {}"
     },
     "tray": {
-        "icon-size": 13,
-        "spacing": 10
+        "icon-size": 12,
+        "spacing": 20
     },
     "clock": {
       "interval": 60,
@@ -110,7 +106,7 @@
         "format-charging": " {capacity}%",
         "format-plugged": " {capacity}%",
         "format-alt": "{time} {icon}",
-        "format-icons":[" ", " ", " ", " ", " " ], 
+        "format-icons":[" ", " ", " ", " ", " " ]
     },
     "bluetooth": {
       	"format": " {status}",
@@ -125,7 +121,7 @@
       	"tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t{device_battery_percentage}%",
         "on-click": "blueman-manager",
         "on-scroll-down": "bluetoothctl power on",
-        "on-scroll-up": "bluetoothctl power off",
+        "on-scroll-up": "bluetoothctl power off"
       },
     "network": {
         "interface": "wlan0",
@@ -138,10 +134,10 @@
         "tooltip-format-wifi": "{essid} ({signalStrength}%)   󰁝 {bandwidthUpBytes} 󰁅 {bandwidthDownBytes}",
         "tooltip-format-ethernet": "{ifname} ",
         "tooltip-format-disconnected": "Disconnected",
-        "max-length": 50,
+        "max-length": 50
     },
     "cpu": {
-        "format": " {usage}%",
+        "format": " {usage}%"
     },
     "pulseaudio": {
         "format": "{icon} {volume}%",
@@ -168,7 +164,7 @@
         "on-click": "pamixer --default-source -t",
         "on-scroll-up": "pamixer --default-source -i 1",
         "on-scroll-down": "pamixer --default-source -d 1",
-        "scroll-step": 0.25,
+        "scroll-step": 0.25
     },
     "idle_inhibitor": {
     "format": "{icon}",
@@ -176,6 +172,6 @@
         "activated": "󰅶",
         "deactivated": "󰾪"
     },
-    "on-click": "source ~/.config/hypr/scripts/toggle_idle_inhibitor.sh",
+    "on-click": "source ~/.config/hypr/scripts/toggle_idle_inhibitor.sh"
 }
 }
