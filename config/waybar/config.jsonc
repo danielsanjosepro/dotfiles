@@ -1,9 +1,8 @@
 {
     "layer": "top",
     "position": "top",
-    //"mod": "dock",
-    //"start-hidden": true,
-    "exclusive": true,
+    "mode": "dock",
+    //"exclusive": true,
     //"passthrough": false,
     "gtk-layer-shell": true,
     "height": 0,

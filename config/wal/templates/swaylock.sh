@@ -7,11 +7,11 @@ swaylock \
 	--effect-blur 7x5 \
 	--effect-vignette 0.5:0.5 \
 	--ring-color {color11.strip} \
-	--key-hl-color ffffff \
+	--key-hl-color {color15.strip} \
 	--line-color 00000000 \
 	--inside-color 00000088 \
 	--separator-color 00000000 \
-  --text-color f5e0dc \
+  --text-color {color15.strip} \
   --inside-ver-color {color13.strip} \
 	--grace 0 \
 	--fade-in 0.0 \

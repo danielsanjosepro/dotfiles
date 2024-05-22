@@ -30,3 +30,6 @@ vim.keymap.set("i", "<Left>", "<cmd>echo 'Use h to move left'<CR>", {})
 vim.keymap.set("i", "<Right>", "<cmd>echo 'Use l to move right'<CR>", {})
 -- Disable mouse
 vim.opt.mouse = ""
+
+-- Shortcut for python isort on the current buffer
+vim.keymap.set("n", "<leader>pi", ":!isort %<CR><CR>", {})

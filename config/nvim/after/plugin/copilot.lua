@@ -6,9 +6,9 @@ require('copilot').setup({
     keymap = {
       jump_prev = "[[",
       jump_next = "]]",
-      accept = "<Tab>",
+      accept = "<leader><Tab>",
       refresh = "gr",
-      open = "<C-K>",
+      open = "<C-K>"
     },
     layout = {
       position = "bottom", -- | top | left | right
