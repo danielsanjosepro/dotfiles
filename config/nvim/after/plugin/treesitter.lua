@@ -9,6 +9,12 @@ require 'nvim-treesitter.configs'.setup {
   -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
   auto_install = true,
 
+  defaults = {
+    lazy = false,
+    version = nil,
+    -- version = "*", -- enable this to try installing the latest stable versions of plugins
+  },
+
   textobjects = {
     select = {
       enable = true,

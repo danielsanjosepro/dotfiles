@@ -7,7 +7,7 @@ fi
 
 # Some parameters
 P10K_STYLE='complex'
-# $P10K_STYLE='simple'
+#P10K_STYLE='simple'
 
 ## Import colorscheme from 'wal' asynchronously
 ## &   # Run the process in the background.

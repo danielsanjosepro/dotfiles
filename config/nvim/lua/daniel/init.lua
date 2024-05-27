@@ -1,4 +1,5 @@
 require("daniel.set")
 require("daniel.remaps")
-require("daniel.packer")
+--require("daniel.packer")
+require("daniel.lazy")
 require("daniel.autocommands")

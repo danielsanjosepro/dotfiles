@@ -102,10 +102,6 @@ return require('packer').startup(function(use)
     -- Autosave
     use({
         "Pocco81/auto-save.nvim",
-        config = function()
-            require("auto-save").setup {
-            }
-        end,
     })
     -- todo hyghtlight
     use 'folke/todo-comments.nvim'

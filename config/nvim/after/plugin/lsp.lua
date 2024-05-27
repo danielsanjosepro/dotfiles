@@ -64,4 +64,16 @@ cmp.setup({
     },
 })
 
+--lsp_zero.format_on_save({
+    --format_opts = {
+        --async = false,
+        --timeout_ms = 1000,
+    --},
+    --servers = {
+        --['tsserver'] = { 'javascript', 'typescript' },
+        --['rust_analyzer'] = { 'rust' },
+        --['ruff'] = { 'python' },
+    --}
+--})
+
 lsp_zero.setup()
