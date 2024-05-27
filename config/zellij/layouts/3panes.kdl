@@ -10,11 +10,14 @@ layout {
             pane size="60%" edit="."
             pane split_direction="horizontal" {
                 pane
-                pane
+                pane command="python"
             }
         }
     }
-    tab name="Git" split_direction="horizontal" {
+    tab name="Git" {
         pane command="lazygit"
+    }
+    tab name="Terminal" {
+        pane
     }
 }
