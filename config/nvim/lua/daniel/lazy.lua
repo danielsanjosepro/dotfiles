@@ -121,4 +121,22 @@ require("lazy").setup({
     {
         "folke/which-key.nvim",
     },
+    -- Firenvim to use neovim in the browser
+    {
+        "glacambre/firenvim",
+        run = function()
+            vim.fn["firenvim#install"](0)
+        end,
+    },
+    -- For surround
+    {
+        "kylechui/nvim-surround",
+        version = "*", -- Use for stability; omit to use `main` branch for the latest features
+        event = "VeryLazy",
+        config = function()
+            require("nvim-surround").setup({
+                -- Configuration here, or leave empty to use defaults
+            })
+        end
+    }
 })

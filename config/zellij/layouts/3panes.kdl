@@ -7,7 +7,9 @@ layout {
     }
     tab name="Dev" split_direction="horizontal" focus=true {
         pane split_direction="vertical" {
-            pane size="60%" edit="."
+            pane size="60%" command="nvim"  close_on_exit=false {
+                args "."
+            }
             pane split_direction="horizontal" {
                 pane
                 pane command="python"
