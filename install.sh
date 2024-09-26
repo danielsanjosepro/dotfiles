@@ -16,7 +16,8 @@ ln -s ~/.dotfiles/zsh/.p10k.zsh ~/.p10k.zsh
 ln -s ~/.dotfiles/zsh/.p10k_simple.zsh ~/.p10k_simple.zsh
 ln -s ~/.dotfiles/zsh/.p10k_complex.zsh ~/.p10k_complex.zsh
 ln -s ~/.dotfiles/zsh/.zshrc.pre-oh-my-zsh ~/.zshrc.pre-oh-my-zsh
-ln -s ~/.dotfiles/zsh/.gitconfig ~/.gitconfig
+
+ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 
 # List of binaries to simlink
 ln -s ~/.dotfiles/bin/batterynotify.sh ~/.local/bin
