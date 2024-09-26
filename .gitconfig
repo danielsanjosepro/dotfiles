@@ -8,3 +8,6 @@
 	rebase = false
 [push]
 	autoSetupRemote = true
+
+[alias]
+  mergetool = "!nvim -c DiffviewOpen"

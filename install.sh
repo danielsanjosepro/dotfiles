@@ -17,6 +17,7 @@ ln -s ~/.dotfiles/.p10k.zsh ~/.p10k.zsh
 ln -s ~/.dotfiles/.p10k_simple.zsh ~/.p10k_simple.zsh
 ln -s ~/.dotfiles/.p10k_complex.zsh ~/.p10k_complex.zsh
 ln -s ~/.dotfiles/.zshrc.pre-oh-my-zsh ~/.zshrc.pre-oh-my-zsh
+
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 
 # List of binaries to simlink
