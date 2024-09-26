@@ -9,5 +9,7 @@
 [push]
 	autoSetupRemote = true
 
+[merge]
+    tool = nvimdiff
 [alias]
   mergetool = "!nvim -c DiffviewOpen"
