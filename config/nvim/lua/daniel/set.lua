@@ -18,5 +18,5 @@ vim.opt.wrap = false
 
 vim.opt.updatetime = 100
 
-vim.opt.colorcolumn = "100"
+vim.opt.colorcolumn = "120"
 vim.api.nvim_set_option("clipboard", "unnamed")

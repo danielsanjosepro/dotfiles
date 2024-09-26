@@ -133,7 +133,8 @@
         "tooltip-format-wifi": "{essid} ({signalStrength}%)   󰁝 {bandwidthUpBytes} 󰁅 {bandwidthDownBytes}",
         "tooltip-format-ethernet": "{ifname} ",
         "tooltip-format-disconnected": "Disconnected",
-        "max-length": 50
+        "max-length": 50,
+        "on-click": "iwgtk"
     },
     "cpu": {
         "format": " {usage}%"

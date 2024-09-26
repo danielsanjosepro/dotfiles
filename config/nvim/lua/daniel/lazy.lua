@@ -52,7 +52,8 @@ require("lazy").setup({
     { 'hrsh7th/cmp-nvim-lsp' },
     { 'hrsh7th/nvim-cmp' },
     { 'L3MON4D3/LuaSnip' },
-
+    { 'hrsh7th/cmp-buffer' },
+    { 'hrsh7th/cmp-path' },
     { "williamboman/mason.nvim" },
     { "williamboman/mason-lspconfig.nvim" },
     -- oil nvim
@@ -138,5 +139,30 @@ require("lazy").setup({
                 -- Configuration here, or leave empty to use defaults
             })
         end
+    },
+    -- none-ls
+    { 'nvimtools/none-ls.nvim' },
+    -- nvim friendly snippets
+    { 'rafamadriz/friendly-snippets' },
+    --Trouble
+    {
+        "folke/trouble.nvim",
+        opts = {}, -- for default options, refer to the configuration section for custom setup.
+        cmd = "Trouble",
+    },
+    -- UI for quickfix list
+    { 'nvim-telescope/telescope-ui-select.nvim' },
+    {
+        'smoka7/hop.nvim',
+        version = "*",
+        opts = {
+            keys = 'etovxqpdygfblzhckisuran'
+        }
+    },
+    { 'jamestthompson3/nvim-remote-containers' },
+    {
+        'MeanderingProgrammer/render-markdown.nvim',
+        opts = {},
+        dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' }, -- if you use standalone mini plugins
     }
 })

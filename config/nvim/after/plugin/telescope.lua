@@ -1,5 +1,6 @@
 local builtin = require('telescope.builtin')
 local media = require('telescope').load_extension('media_files')
+require("telescope").load_extension("ui-select")
 
 require'telescope'.setup {
   extensions = {
@@ -18,3 +19,5 @@ vim.keymap.set('n', '<leader>fr', builtin.registers, {})
 vim.keymap.set('n', '<leader>fs', builtin.lsp_document_symbols, {})
 vim.keymap.set('n', '<leader>gf', builtin.git_files, {})
 vim.keymap.set('n', '<leader>mf', media.media_files, {})
+-- todo comments integration
+vim.keymap.set('n', '<leader>ft', '<cmd>TodoTelescope<CR>', {})

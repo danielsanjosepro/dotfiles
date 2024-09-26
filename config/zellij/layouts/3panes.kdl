@@ -1,25 +1,24 @@
 layout {
     default_tab_template {
-        children
-        pane size=2 borderless=true {
+        pane size=1 borderless=true {
             plugin location="zellij:compact-bar"
         }
+        children
     }
     tab name="Dev" split_direction="horizontal" focus=true {
-        pane split_direction="vertical" {
-            pane size="60%" command="nvim"  close_on_exit=false {
-                args "."
-            }
-            pane split_direction="horizontal" {
-                pane
-                pane command="python"
-            }
+        pane command="nvim" close_on_exit=false {
+            args "."
         }
     }
     tab name="Git" {
-        pane command="lazygit"
+        pane borderless=true command="lazygit"
     }
     tab name="Terminal" {
-        pane
+        pane split_direction="vertical" {
+            pane
+            pane command="python"
+        }
     }
 }
+
+pane_frames true

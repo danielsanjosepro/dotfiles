@@ -22,15 +22,22 @@ require('mason-lspconfig').setup({
     ensure_installed = {
         "lua_ls",
         "pyright",
+        "yamlls",
+        "tsserver",
+        "quick_lint_js",
     },
     handlers = {
         lsp_zero.default_setup,
     },
 })
 
-require('lspconfig').lua_ls.setup{}
+require('lspconfig').lua_ls.setup {}
+
+require('lspconfig').yamlls.setup {}
 
 require('lspconfig').ruff.setup {}
+
+require('lspconfig').tsserver.setup {}
 
 require('lspconfig').pyright.setup {
     settings = {
@@ -49,30 +56,47 @@ require('lspconfig').pyright.setup {
 
 local cmp = require('cmp')
 
+require('luasnip.loaders.from_vscode').lazy_load()
+
 cmp.setup({
-    sources = {
-        { name = 'nvim_lsp' },
-        { name = 'buffer' },
-        { name = 'Luasnip' },
-        { name = 'path' },
-    },
     snippet = {
+        -- REQUIRED - you must specify a snippet engine
         expand = function(args)
-            require('luasnip').lsp_expand(args.body)
+            require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+            -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+            -- require'snippy'.expand_snippet(args.body) -- For `snippy` users.
         end,
     },
+    sources = cmp.config.sources({
+        { name = 'nvim_lsp' },
+        { name = 'luasnip' },
+        { name = 'buffer' },
+        { name = 'path' },
+    })
 })
 
+local ls = require("luasnip")
+
+vim.keymap.set({ "i" }, "<C-K>", function() ls.expand() end, { silent = true })
+vim.keymap.set({ "i", "s" }, "<C-L>", function() ls.jump(1) end, { silent = true })
+vim.keymap.set({ "i", "s" }, "<C-J>", function() ls.jump(-1) end, { silent = true })
+
+vim.keymap.set({ "i", "s" }, "<C-E>", function()
+    if ls.choice_active() then
+        ls.change_choice(1)
+    end
+end, { silent = true })
+
 --lsp_zero.format_on_save({
-    --format_opts = {
-        --async = false,
-        --timeout_ms = 1000,
-    --},
-    --servers = {
-        --['tsserver'] = { 'javascript', 'typescript' },
-        --['rust_analyzer'] = { 'rust' },
-        --['ruff'] = { 'python' },
-    --}
+--format_opts = {
+--async = false,
+--timeout_ms = 1000,
+--},
+--servers = {
+--['tsserver'] = { 'javascript', 'typescript' },
+--['rust_analyzer'] = { 'rust' },
+--['ruff'] = { 'python' },
+--}
 --})
 
 lsp_zero.setup()
