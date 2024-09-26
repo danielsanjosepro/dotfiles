@@ -168,4 +168,6 @@ require("lazy").setup({
     {
         "sindrets/diffview.nvim"
     },
+    { 'fladson/vim-kitty'},
+    { 'kmonad/kmonad-vim'},
 })

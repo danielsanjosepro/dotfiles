@@ -1,0 +1,39 @@
+@define-color base   #1e1e2e;
+
+@define-color cursor                  #928374;
+@define-color cursor_text_color       #282828;
+
+@define-color url_color               #83a598;
+
+@define-color visual_bell_color       #8ec07c;
+@define-color bell_border_color       #8ec07c;
+
+@define-color active_border_color     #d3869b;
+@define-color inactive_border_color   #665c54;
+
+@define-color foreground              #ebdbb2;
+@define-color background              #282828;
+@define-color selection_foreground    #928374;
+@define-color selection_background    #ebdbb2;
+
+@define-color active_tab_foreground   #fbf1c7;
+@define-color active_tab_background   #665c54;
+@define-color inactive_tab_foreground #a89984;
+@define-color inactive_tab_background #3c3836;
+
+@define-color color0                  #665c54;
+@define-color color8                  #7c6f64;
+@define-color color1                  #cc241d;
+@define-color color9                  #fb4934;
+@define-color color2                  #98971a;
+@define-color color10                 #b8bb26;
+@define-color color3                  #d79921;
+@define-color color11                 #fabd2f;
+@define-color color4                  #458588;
+@define-color color12                 #83a598;
+@define-color color5                  #b16286;
+@define-color color13                 #d3869b;
+@define-color color6                  #689d6a;
+@define-color color14                 #8ec07c;
+@define-color color7                  #a89984;
+@define-color color15                 #bdae93;

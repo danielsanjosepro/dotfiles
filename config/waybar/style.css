@@ -1,9 +1,8 @@
-@import "mocha.css";
-@import "colors-waybar.css";
+@import "gruvbox.css";
 
 @define-color backgroundWaybar alpha(@base, 0.0);
 @define-color backgroundWaybarTransparent alpha(@base, 0.2);
-@define-color foregroundWaybar @color11;
+@define-color foregroundWaybar @actice_tab_foreground;
 @define-color activeButton @color11;
 
 

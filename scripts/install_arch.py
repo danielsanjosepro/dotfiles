@@ -32,7 +32,6 @@ yay_packages = [
     "qt6-wayland",
     "dunst",  # Notification daemon
     "xournal",  # PDF annotation
-    "python-pywalfox",  # Pywal for Firefox
     "checkupdates",  # Check for updates
     "grim",  # Screenshot utility
     "slurp",  # Select region for grim
