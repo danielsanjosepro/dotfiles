@@ -128,3 +128,18 @@ bindkey ^R history-incremental-search-backward
 bindkey ^S history-incremental-search-forward
 
 eval "$(zoxide init zsh)"
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+# >>> mamba initialize >>>
+# !! Contents within this block are managed by 'mamba init' !!
+export MAMBA_EXE='/home/linuxbrew/.linuxbrew/Cellar/micromamba/1.5.10/bin/micromamba';
+export MAMBA_ROOT_PREFIX='/home/daniel/micromamba';
+__mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__mamba_setup"
+else
+    alias micromamba="$MAMBA_EXE"  # Fallback on help from mamba activate
+fi
+unset __mamba_setup
+# <<< mamba initialize <<<
