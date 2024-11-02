@@ -33,3 +33,18 @@ vim.opt.mouse = ""
 
 -- Shortcut for python isort on the current buffer
 vim.keymap.set("n", "<leader>pi", ":!isort %<CR><CR>", {})
+
+-- Function to remap word to a different word in a passed directory
+local function remap_word(opt)
+    local word = opt.fargs[1]
+    local replacement = opt.fargs[2]
+    local path = opt.fargs[3]
+    print("Replacing " .. word .. " by " .. replacement .. " in " .. path)
+    vim.cmd("vimgrep /" .. word .. "/ `find " .. path .. " -type f`")
+    vim.cmd("cdo s/" .. word .. "/" .. replacement .. "/gc")
+end
+vim.api.nvim_create_user_command(
+    'RemapWord',
+    remap_word,
+    { nargs = "+" }
+)
