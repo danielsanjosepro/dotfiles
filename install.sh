@@ -1,23 +1,31 @@
 #!/bin/bash 
 
+# Get the directory of the script
+DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # List of folders to simlink
-ln -s ~/.dotfiles/config/nvim ~/.config/nvim
-ln -s ~/.dotfiles/config/waybar ~/.config/waybar
-ln -s ~/.dotfiles/config/darktable ~/.config/darktable
-ln -s ~/.dotfiles/config/vis ~/.config/vis
-ln -s ~/.dotfiles/config/dunst ~/.config/dunst
-ln -s ~/.dotfiles/config/hypr ~/.config/hypr
-ln -s ~/.dotfiles/config/zellij ~/.config/zellij
-ln -s ~/.dotfiles/config/kitty ~/.config/kitty
+CONFIG_LIST=(
+    dunst
+    hypr 
+    kitty 
+    nvim 
+    darktable 
+    waybar 
+    vis 
+    zellij
+)
+
+CONFIG_DIR=~/.config
+
+for NAME in ${CONFIG_LIST[@]}; do
+    ln -s -f $DOTFILES_DIR/config/$NAME $CONFIG_DIR/$NAME 
+done
 
 # List of files to simlink
-ln -s ~/.dotfiles/zsh/.zshrc ~/.zshrc
-ln -s ~/.dotfiles/zsh/.p10k.zsh ~/.p10k.zsh
-ln -s ~/.dotfiles/zsh/.p10k_simple.zsh ~/.p10k_simple.zsh
-ln -s ~/.dotfiles/zsh/.p10k_complex.zsh ~/.p10k_complex.zsh
-ln -s ~/.dotfiles/zsh/.zshrc.pre-oh-my-zsh ~/.zshrc.pre-oh-my-zsh
+ln -s -f $DOTFILES_DIR/zsh/.zshrc ~/.zshrc
+ln -s -f $DOTFILES_DIR/zsh/.p10k.zsh ~/.p10k.zsh
+ln -s -f $DOTFILES_DIR/zsh/.p10k_simple.zsh ~/.p10k_simple.zsh
+ln -s -f $DOTFILES_DIR/zsh/.p10k_complex.zsh ~/.p10k_complex.zsh
+ln -s -f $DOTFILES_DIR/zsh/.zshrc.pre-oh-my-zsh ~/.zshrc.pre-oh-my-zsh
 
-ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
-
-# List of binaries to simlink
-ln -s ~/.dotfiles/bin/batterynotify.sh ~/.local/bin
+ln -s -f $DOTFILES_DIR/.gitconfig ~/.gitconfig
