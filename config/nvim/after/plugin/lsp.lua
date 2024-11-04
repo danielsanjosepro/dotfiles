@@ -23,7 +23,6 @@ require('mason-lspconfig').setup({
         "lua_ls",
         "pyright",
         "yamlls",
-        "tsserver",
         "quick_lint_js",
     },
     handlers = {
@@ -36,8 +35,6 @@ require('lspconfig').lua_ls.setup {}
 require('lspconfig').yamlls.setup {}
 
 require('lspconfig').ruff.setup {}
-
-require('lspconfig').tsserver.setup {}
 
 require('lspconfig').pyright.setup {
     settings = {
