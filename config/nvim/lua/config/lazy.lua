@@ -108,13 +108,6 @@ require("lazy").setup({
 
     -- gitsigns
     { 'lewis6991/gitsigns.nvim' },
-    -- hardtime for good habits
-    -- lazy.nvim
-    {
-        "m4xshen/hardtime.nvim",
-        dependencies = { "MunifTanjim/nui.nvim", "nvim-lua/plenary.nvim" },
-        opts = {}
-    },
     -- For surround
     {
         "kylechui/nvim-surround",
@@ -162,5 +155,17 @@ require("lazy").setup({
             require('devcontainer').setup({})
         end
 
+    },
+    -- Codeium
+    {
+        "Exafunction/codeium.nvim",
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+            "hrsh7th/nvim-cmp",
+        },
+        config = function()
+            require("codeium").setup({
+            })
+        end
     },
 })

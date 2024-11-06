@@ -29,3 +29,4 @@ ln -s -f $DOTFILES_DIR/zsh/.p10k_complex.zsh ~/.p10k_complex.zsh
 ln -s -f $DOTFILES_DIR/zsh/.zshrc.pre-oh-my-zsh ~/.zshrc.pre-oh-my-zsh
 
 ln -s -f $DOTFILES_DIR/.gitconfig ~/.gitconfig
+ln -s -f $DOTFILES_DIR/.bash_prompt ~/.bash_prompt
