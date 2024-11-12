@@ -1,0 +1,7 @@
+{
+  "LazyVim": { "branch": "main", "commit": "ea266e73265e32183acbec0bd39f8108e213770f" },
+  "gruvbox.nvim": { "branch": "main", "commit": "96a8ec336fb48a11cefbd57508888361431aac26" },
+  "lazy.nvim": { "branch": "main", "commit": "24fa2a97085ca8a7220b5b078916f81e316036fd" },
+  "neoconf.nvim": { "branch": "main", "commit": "777cd15e537e6b3e7cfbb6dba77f0caeaa95aef0" },
+  "neodev.nvim": { "branch": "main", "commit": "ce9a2e8eaba5649b553529c5498acb43a6c317cd" }
+}
