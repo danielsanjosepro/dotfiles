@@ -38,7 +38,7 @@ keybinds {
         bind "c" { SwitchToMode "RenamePane"; PaneNameInput 0;}
     }
     move {
-        bind "Alt h" { SwitchToMode "Normal"; }
+        bind "Alt m" { SwitchToMode "Normal"; }
         bind "n" "Tab" { MovePane; }
         bind "p" { MovePaneBackwards; }
         bind "h" "Left" { MovePane "Left"; }
@@ -145,6 +145,14 @@ keybinds {
         bind "x" { CloseFocus; SwitchToMode "Normal"; }
     }
     shared_except "locked" {
+        unbind "Ctrl h" // was Move, now Alt-v
+        unbind "Ctrl o" // was Session, now Alt-w
+        unbind "Ctrl s" // was Scroll, now Alt-s
+        unbind "Ctrl n" // was Resize, now Alt-z
+        unbind "Ctrl p" // was Pane, now Alt-a
+        unbind "Ctrl t" // was Tab, now Alt-b
+        unbind "Ctrl g" // was Locked, now Alt-g
+        unbind "Ctrl q" // was Quit, now Alt-q
         bind "Alt g" { SwitchToMode "Locked"; }
         bind "Alt q" { Quit; }
         bind "Alt n" { NewPane; }
@@ -178,7 +186,7 @@ keybinds {
         bind "Alt t" { SwitchToMode "Tab"; }
     }
     shared_except "move" "locked" {
-        bind "Alt h" { SwitchToMode "Move"; }
+        bind "Alt m" { SwitchToMode "Move"; }
     }
     shared_except "tmux" "locked" {
         bind "Alt b" { SwitchToMode "Tmux"; }
@@ -290,7 +298,7 @@ default_layout "3panes"
 // Choose the mode that zellij uses when starting up.
 // Default: normal
 //
-default_mode "locked"
+default_mode "normal"
 
 // Toggle enabling the mouse mode.
 // On certain configurations, or terminals this could
