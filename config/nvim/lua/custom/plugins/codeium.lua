@@ -5,8 +5,11 @@ return {
 		"hrsh7th/nvim-cmp",
 	},
 	config = function()
+		local home_dir = os.getenv("HOME")
 		require("codeium").setup({
 			-- Optionally disable cmp source if using virtual text only
+			config_path = home_dir .. "/codeium.json",
+
 			enable_cmp_source = false,
 			virtual_text = {
 				enabled = true,
