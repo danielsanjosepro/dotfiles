@@ -613,7 +613,7 @@ require("lazy").setup({
 			local servers = {
 				clangd = {},
 				-- gopls = {},
-				pyright = {},
+				-- pyright = {},
 				ruff_lsp = {},
 
 				-- rust_analyzer = {},
@@ -656,7 +656,7 @@ require("lazy").setup({
 			vim.list_extend(ensure_installed, {
 				"stylua", -- Used to format Lua code
 				"ruff_lsp",
-				"pyright",
+				-- "pyright",
 			})
 			require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
