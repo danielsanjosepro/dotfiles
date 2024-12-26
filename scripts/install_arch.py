@@ -6,11 +6,6 @@ pacman_packages = [
     "git",
     "darktable",
     "gimp",
-    "python-numpy",
-    "python-matplotlib",
-    "python-pandas",
-    "python-scipy",
-    "hyprpaper",
 ]
 
 yay_packages = [
