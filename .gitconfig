@@ -13,3 +13,5 @@
     tool = nvimdiff
 [alias]
   mergetool = "!nvim -c DiffviewOpen"
+[init]
+	defaultBranch = main
