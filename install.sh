@@ -13,6 +13,9 @@ CONFIG_LIST=(
     waybar 
     vis 
     zellij
+    i3
+    i3status-rust
+    rofi
 )
 
 CONFIG_DIR=~/.config

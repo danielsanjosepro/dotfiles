@@ -196,7 +196,7 @@ mode "resize" {
         bindsym Escape mode "default"
 }
 
-bindsym $+Shiftmod+r mode "resize"
+bindsym $mod+r mode "resize"
 
 # Styling
 

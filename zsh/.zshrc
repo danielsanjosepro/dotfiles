@@ -143,3 +143,7 @@ else
 fi
 unset __mamba_setup
 # <<< mamba initialize <<<
+export PATH="/home/daniel/.pixi/bin:$PATH"
+if [ -f ~/.env ]; then
+  export $(grep -v '^#' ~/.env | xargs)
+fi
