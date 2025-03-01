@@ -127,23 +127,19 @@ set -o vi
 bindkey ^R history-incremental-search-backward 
 bindkey ^S history-incremental-search-forward
 
-eval "$(zoxide init zsh)"
-
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-
-# >>> mamba initialize >>>
-# !! Contents within this block are managed by 'mamba init' !!
-export MAMBA_EXE='/home/linuxbrew/.linuxbrew/Cellar/micromamba/1.5.10/bin/micromamba';
-export MAMBA_ROOT_PREFIX='/home/daniel/micromamba';
-__mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__mamba_setup"
-else
-    alias micromamba="$MAMBA_EXE"  # Fallback on help from mamba activate
+# Check if zoxide is installed and load it
+if command -v zoxide &> /dev/null; then
+  eval "$(zoxide init zsh)"
 fi
-unset __mamba_setup
-# <<< mamba initialize <<<
-export PATH="/home/daniel/.pixi/bin:$PATH"
+
+# Check if brew is installed and load it
+if command -v brew &> /dev/null; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# export PATH="$HOME/.pixi/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
+
 if [ -f ~/.env ]; then
   export $(grep -v '^#' ~/.env | xargs)
 fi
