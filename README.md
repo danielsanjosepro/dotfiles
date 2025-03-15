@@ -1,4 +1,4 @@
-# Daniel's dotfiles
+# Daniel's dotfiles 📂
 
 This repository maintains my scripts and configuration files for my desktop environment. It is a work in progress and is constantly being updated.
 
