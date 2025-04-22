@@ -16,7 +16,7 @@ layout {
     tab name="Terminal" {
         pane split_direction="vertical" {
             pane
-            pane command="python"
+            pane
         }
     }
 }
