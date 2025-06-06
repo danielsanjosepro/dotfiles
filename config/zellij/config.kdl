@@ -176,6 +176,9 @@ keybinds {
     shared_except "resize" "locked" {
         bind "Alt n" { SwitchToMode "Resize"; }
     }
+    shared_except "scroll" "locked" {  // Enter edit mode 
+        bind "Alt e" { SwitchToMode "Scroll"; EditScrollback; SwitchToMode "Normal"; }
+    }
     shared_except "scroll" "locked" {
         bind "Alt s" { SwitchToMode "Scroll"; }
     }
@@ -323,8 +326,8 @@ default_mode "normal"
 // that will be used by default if this option is not set.
 // Examples:
 //
-// copy_command "xclip -selection clipboard" // x11
-copy_command "wl-copy"                    // wayland
+copy_command "xclip -selection clipboard" // x11
+// copy_command "wl-copy"                    // wayland
 // copy_command "pbcopy"                     // osx
 
 // Choose the destination for copied text

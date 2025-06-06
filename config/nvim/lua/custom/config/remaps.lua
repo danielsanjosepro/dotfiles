@@ -26,6 +26,9 @@ vim.keymap.set("i", "<Up>", "<cmd>echo 'Use k to move up'<CR>", {})
 vim.keymap.set("i", "<Down>", "<cmd>echo 'Use j to move down'<CR>", {})
 vim.keymap.set("i", "<Left>", "<cmd>echo 'Use h to move left'<CR>", {})
 vim.keymap.set("i", "<Right>", "<cmd>echo 'Use l to move right'<CR>", {})
+
+-- Create a keymap to apply norm to the lines selected for the key w
+vim.keymap.set("v", "<leader>n", "<cmd>norm@w<CR>", {})
 -- Disable mouse
 vim.opt.mouse = ""
 

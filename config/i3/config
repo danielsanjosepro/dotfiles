@@ -256,6 +256,7 @@ bindsym $mod+Shift+Return exec "xrandr --output DisplayPort-3 --auto --right-of 
 bindsym $mod+Shift+Right move workspace to output right
 bindsym $mod+Shift+Left move workspace to output left
 
+bindsym $mod+Shift+XF86AudioMedia exec betterlockscreen -l dim
 
 # window rules, you can find the window class using xprop
 for_window [class=".*"] border pixel 2
