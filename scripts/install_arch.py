@@ -9,32 +9,38 @@ pacman_packages = [
 ]
 
 yay_packages = [
-    # "visual-studio-code-bin",
-    "python-pip",
-    "python-pywal",
-    "brightnessctl",
-    "waybar",
-    "pamixer",
-    "unzip",
-    "flatpak",
-    "wl-clipboard",
-    "hyprlock",
-    "hypridle",
+    "blueman",
     "bluez",  # Bluetooth support
     "bluez-utils",
-    "blueman",
+    "brightnessctl",
+    "checkupdates",  # Check for updates
+    "dunst",  # Notification daemon
+    "eza",
+    "fish",
+    "flatpak",
+    "fzf",
+    "grim",  # Screenshot utility
+    "hypridle",
+    "hyprlock",
+    "i3status-rust",
+    "npm",
+    "pamixer",
+    "pavucontrol",  # Pulseaudio volume control
+    "python-pip",
+    "python-pywal",
     "qt5-wayland",  # qt support for wayland
     "qt6-wayland",
-    "dunst",  # Notification daemon
-    "xournal",  # PDF annotation
-    "checkupdates",  # Check for updates
-    "grim",  # Screenshot utility
+    "ripgrep",  # Ripgrep for fast searching
     "slurp",  # Select region for grim
+    "unzip",
+    "waybar",
+    "wl-clipboard",
+    "xournal",  # PDF annotation
+    "xsel",
+    "zoxide",  # Directory jumping
     "zsh",  # Zsh shell
     "zsh-autosuggestions",  # Zsh autosuggestions
-    "pavucontrol",  # Pulseaudio volume control
-    "ripgrep",  # Ripgrep for fast searching
-    "zoxide",  # Directory jumping
+    # "visual-studio-code-bin",
 ]
 
 for package in pacman_packages:
