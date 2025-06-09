@@ -13,6 +13,8 @@ alias ls="eza"
 
 # === PATH ===
 export PATH="$PATH:/home/daniel/.local/bin"
+export PATH="$PATH:/home/daniel/.cargo/bin"
+
 export EDITOR="nvim"
 
 # === BIND ===
