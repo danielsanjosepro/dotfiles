@@ -167,10 +167,12 @@ bindsym $mod+e exec firefox
 bindsym $mod+t exec kitty
 bindsym $mod+Print exec ~/.config/i3/scripts/screenshot.sh
 
+exec --no-startup-id i3-msg 'workspace 1:Files; exec nautilus'
 exec --no-startup-id i3-msg 'workspace 2:Web; exec firefox'
 exec --no-startup-id i3-msg 'workspace 3:Code; exec kitty'
+exec --no-startup-id i3-msg 'workspace 4:Zotero; exec zotero'
+exec --no-startup-id i3-msg 'workspace 5:Slack; exec slack'
 exec --no-startup-id i3-msg 'workspace 6:Music; exec spotify'
-exec --no-startup-id i3-msg 'workspace 6:Music; exec kitty -r vis'
 
 
 
