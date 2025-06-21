@@ -13,10 +13,14 @@ zoxide init fish | source
 
 # === ALIAS ===
 alias ls="eza"
+alias v='NVIM_APPNAME="kickstart.nvim" nvim'
+alias ev='z kickstart && v .'
 
 # === PATH ===
 export PATH="$PATH:/home/daniel/.local/bin"
 export PATH="$PATH:/home/daniel/.cargo/bin"
+
+pixi completion --shell fish | source
 
 # === ENV ===
 load_env_file $HOME/.env
