@@ -35,4 +35,4 @@ ln -s -f $DOTFILES_DIR/zsh/.zshrc.pre-oh-my-zsh ~/.zshrc.pre-oh-my-zsh
 ln -s -f $DOTFILES_DIR/.gitconfig ~/.gitconfig
 ln -s -f $DOTFILES_DIR/.bash_prompt ~/.bash_prompt
 
-ln -s -f $DOTFILES_DIR/bin/zellij_sessionizer.sh ~/.local/bin/zellij_sessionizer.sh
+ln -s $DOTFILES_DIR/bin/zellij_sessionizer $HOME/.local/bin/zellij_sessionizer
