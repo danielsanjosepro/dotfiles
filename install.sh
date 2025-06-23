@@ -16,6 +16,7 @@ CONFIG_LIST=(
     i3
     i3status-rust
     rofi
+    fish
 )
 
 CONFIG_DIR=~/.config
@@ -33,3 +34,5 @@ ln -s -f $DOTFILES_DIR/zsh/.zshrc.pre-oh-my-zsh ~/.zshrc.pre-oh-my-zsh
 
 ln -s -f $DOTFILES_DIR/.gitconfig ~/.gitconfig
 ln -s -f $DOTFILES_DIR/.bash_prompt ~/.bash_prompt
+
+ln -s -f $DOTFILES_DIR/bin/zellij_sessionizer.sh ~/.local/bin/zellij_sessionizer.sh

@@ -41,17 +41,34 @@ return {
 							end
 						end,
 					},
+					markdown = {
+						command = function()
+							-- We check if bpython is installed, if not we backup to ipython.
+							-- If ipython is not installed, we backup to python...
+							local bpython_is_installed = os.execute("bpython --version > /dev/null 2>&1") == 0
+							-- local ipython_is_installed = os.execute("ipython --version > /dev/null 2>&1") == 0
+							if bpython_is_installed then
+								return { "bpython" }
+							-- elseif ipython_is_installed then
+							-- 	return { "ipython" }
+							else
+								return { "python3" }
+							end
+						end,
+						format = common.bracketed_paste_python,
+						block_dividers = { "```python", "```" },
+					},
 					python = {
 						-- command = { "python3" },
 						command = function()
 							-- We check if bpython is installed, if not we backup to ipython.
 							-- If ipython is not installed, we backup to python...
 							local bpython_is_installed = os.execute("bpython --version > /dev/null 2>&1") == 0
-							local ipython_is_installed = os.execute("ipython --version > /dev/null 2>&1") == 0
+							-- local ipython_is_installed = os.execute("ipython --version > /dev/null 2>&1") == 0
 							if bpython_is_installed then
 								return { "bpython" }
-							elseif ipython_is_installed then
-								return { "ipython" }
+							-- elseif ipython_is_installed then
+							-- 	return { "ipython" }
 							else
 								return { "python3" }
 							end

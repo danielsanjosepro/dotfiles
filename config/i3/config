@@ -20,6 +20,7 @@ font pango:Fira Mono 12
 #font pango:DejaVu Sans Mono 8
 
 exec setxkbmap -layout de
+bindsym $mod+Shift+s exec setxkbmap -layout de
 
 exec /usr/lib/polkit-kde-authentication-agent-1 
 
@@ -34,7 +35,8 @@ exec --no-startup-id dex --autostart --environment i3
 
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+# exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork -time 15
+
 
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
@@ -84,10 +86,10 @@ bindsym $mod+Shift+k move up
 bindsym $mod+Shift+l move right
 
 # alternatively, you can use the cursor keys:
-bindsym $mod+Shift+Left move left
-bindsym $mod+Shift+Down move down
-bindsym $mod+Shift+Up move up
-bindsym $mod+Shift+Right move right
+# bindsym $mod+Shift+Left move left
+# bindsym $mod+Shift+Down move down
+# bindsym $mod+Shift+Up move up
+# bindsym $mod+Shift+Right move right
 
 # split in horizontal orientation
 # bindsym $mod+w split h
@@ -163,12 +165,14 @@ bindsym $mod+Shift+q exec "i3-nagbar -t warning -m 'You pressed the exit shortcu
 # My keybindings
 bindsym $mod+e exec firefox
 bindsym $mod+t exec kitty
+bindsym $mod+Print exec ~/.config/i3/scripts/screenshot.sh
 
+exec --no-startup-id i3-msg 'workspace 1:Files; exec nautilus'
 exec --no-startup-id i3-msg 'workspace 2:Web; exec firefox'
 exec --no-startup-id i3-msg 'workspace 3:Code; exec kitty'
-exec --no-startup-id i3-msg 'workspace 5:Docker; exec kitty -r docker'
+exec --no-startup-id i3-msg 'workspace 4:Zotero; exec zotero'
+exec --no-startup-id i3-msg 'workspace 5:Slack; exec slack'
 exec --no-startup-id i3-msg 'workspace 6:Music; exec spotify'
-exec --no-startup-id i3-msg 'workspace 6:Music; exec kitty -r vis'
 
 
 
@@ -197,7 +201,7 @@ mode "resize" {
         bindsym Escape mode "default"
 }
 
-bindsym $mod+r mode "resize"
+bindsym $+Shiftmod+r mode "resize"
 
 # Styling
 
@@ -242,6 +246,19 @@ client.unfocused #263640 #b08500 #93a1a1 #263640 #263640
 client.urgent #263640 #b08500 #93a1a1 #263640 #263640
 client.placeholder #263640 #b08500 #93a1a1 #263640 #263640
 client.background #263640
+
+set $left_screen eDP
+set $right_screen DisplayPort-1
+workspace 1 output $left_screen
+workspace 2 output $right_screen
+workspace 3 output $right_screen
+
+bindsym $mod+Shift+Return exec "xrandr --output DisplayPort-3 --auto --right-of eDP"
+
+bindsym $mod+Shift+Right move workspace to output right
+bindsym $mod+Shift+Left move workspace to output left
+
+bindsym $mod+Shift+XF86AudioMedia exec betterlockscreen -l dim
 
 # window rules, you can find the window class using xprop
 for_window [class=".*"] border pixel 2
