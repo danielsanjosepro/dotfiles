@@ -3,6 +3,14 @@ keybinds {
     normal {
         // uncomment this and adjust key if using copy_on_select=false
         // bind "Alt c" { Copy; }
+        bind "Ctrl f" { LaunchOrFocusPlugin "file:~/.config/zellij/plugins/zellij-sessionizer.wasm" {
+                floating true
+                move_to_focused_tab true
+                cwd "/"
+                session_layout "3panes"
+                root_dirs "/home/daniel/repos;/home/franka/repos;"
+            };
+        }
     }
     locked {
         bind "Alt g" { SwitchToMode "Normal"; }

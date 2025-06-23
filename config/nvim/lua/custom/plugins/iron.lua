@@ -33,12 +33,13 @@ return {
 						-- Can be a table or a function that
 						-- returns a table (see below)
 						command = function()
-							local env_shell = os.getenv("SHELL")
-							if env_shell then
-								return env_shell
-							else
-								return { "bash" }
-							end
+							return { "bash" }
+							-- local env_shell = os.getenv("SHELL")
+							-- if env_shell then
+							-- 	return env_shell
+							-- else
+							-- 	return { "bash" }
+							-- end
 						end,
 					},
 					markdown = {
