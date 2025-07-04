@@ -16,5 +16,5 @@ vim.opt.wrap = false
 
 vim.opt.updatetime = 100
 
-vim.opt.colorcolumn = "120"
+vim.opt.colorcolumn = '120'
 vim.opt.laststatus = 3
