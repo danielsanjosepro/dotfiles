@@ -6,7 +6,7 @@ layout {
         children
     }
     tab name="Dev" split_direction="horizontal" focus=true {
-        pane command="nvim" close_on_exit=false {
+        pane command="$EDITOR" close_on_exit=false {
             args "."
         }
     }
