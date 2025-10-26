@@ -10,6 +10,7 @@ set -U fish_greeting
 fzf --fish | source
 
 zoxide init fish | source
+starship init fish | source
 
 # === ALIAS ===
 alias ls="eza"
@@ -23,6 +24,8 @@ alias zs='bash $HOME/.local/bin/zellij_sessionizer'
 alias ev='z kickstart && zs $PWD'
 alias eg='z crisp_gym && zs $PWD'
 alias ec='z crisp_py && zs $PWD'
+
+alias g='bash $HOME/.local/bin/open-github.bash'
 
 eval (zellij setup --generate-completion fish)
 

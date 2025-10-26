@@ -36,3 +36,4 @@ ln -s -f $DOTFILES_DIR/.gitconfig ~/.gitconfig
 ln -s -f $DOTFILES_DIR/.bash_prompt ~/.bash_prompt
 
 ln -s $DOTFILES_DIR/bin/zellij_sessionizer $HOME/.local/bin/zellij_sessionizer
+ln -s $DOTFILES_DIR/scripts/open-github.bash $HOME/.local/bin/open-github.bash
