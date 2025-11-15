@@ -88,7 +88,7 @@ vim.g.maplocalleader = ' '
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
 
--- [[ Setting options ]]
+-- [[ Setting options ]]set
 -- See `:help vim.o`
 
 -- Make line numbers default
@@ -248,6 +248,50 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     vim.hl.on_yank()
   end,
 })
+
+-- restore cursor to file position in previous editing session
+vim.api.nvim_create_autocmd('BufReadPost', {
+  callback = function(args)
+    local mark = vim.api.nvim_buf_get_mark(args.buf, '"')
+    local line_count = vim.api.nvim_buf_line_count(args.buf)
+    if mark[1] > 0 and mark[1] <= line_count then
+      vim.api.nvim_win_set_cursor(0, mark)
+      -- defer centering slightly so it's applied after render
+      vim.schedule(function()
+        vim.cmd 'normal! zz'
+      end)
+    end
+  end,
+})
+
+vim.api.nvim_create_user_command('TypstPin', function()
+  local tinymist_id = nil
+  for _, client in pairs(vim.lsp.get_active_clients()) do
+    if client.name == 'tinymist' then
+      tinymist_id = client.id
+      break
+    end
+  end
+
+  if not tinymist_id then
+    vim.notify('tinymist not running!', vim.log.levels.ERROR)
+    return
+  end
+
+  local client = vim.lsp.get_client_by_id(tinymist_id)
+  if client then
+    client.request('workspace/executeCommand', {
+      command = 'tinymist.pinMain',
+      arguments = { vim.api.nvim_buf_get_name(0) },
+    }, function(err)
+      if err then
+        vim.notify('error pinning: ' .. err, vim.log.levels.ERROR)
+      else
+        vim.notify('succesfully pinned', vim.log.levels.INFO)
+      end
+    end, 0)
+  end
+end, {})
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info

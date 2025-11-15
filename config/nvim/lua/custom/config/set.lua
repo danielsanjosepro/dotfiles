@@ -1,4 +1,3 @@
-vim.opt.winborder = 'rounded'
 vim.wo.number = true
 vim.wo.relativenumber = true
 
