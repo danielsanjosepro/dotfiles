@@ -4,6 +4,7 @@
 
 [core]
 	editor = nvim
+    pager = delta
 [pull]
 	rebase = false
 [push]
@@ -20,5 +21,20 @@
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
+
 [fetch]
-	prune = true
+    prune = true
+
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true    # use n and N to move between diff sections
+    ; side-by-side = true
+    line-numbers = true
+    dark = true
+    syntax-theme = gruvbox-dark
+    true-color = always
+
+    conflictStyle = zdiff3
