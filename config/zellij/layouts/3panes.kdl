@@ -13,11 +13,14 @@ layout {
     tab name="Git" {
         pane borderless=true command="lazygit"
     }
-    tab name="Terminal" {
+    tab name="Terminals" {
         pane split_direction="vertical" {
             pane
             pane
         }
+    }
+    tab name="Open Code" {
+        pane borderless=true command="opencode"
     }
 }
 
