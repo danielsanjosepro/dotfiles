@@ -22,6 +22,11 @@ layout {
     tab name="Open Code" {
         pane borderless=true command="opencode"
     }
+    tab name="Diffs" {
+        pane borderless=true command="bash" {
+            args "-c" "git ls-files | entr -c git diff"
+        }
+    }
 }
 
 pane_frames false
