@@ -44,9 +44,22 @@ export EDITOR="nvim"
 bind \cf "zellij_sessionizer.sh ."
 fish_add_path /home/daniel/.pixi/bin
 
-# >>> mamba initialize >>>
-# !! Contents within this block are managed by 'mamba shell init' !!
-set -gx MAMBA_EXE "/usr/bin/mamba"
-set -gx MAMBA_ROOT_PREFIX "/home/daniel/.local/share/mamba"
-$MAMBA_EXE shell hook --shell fish --root-prefix $MAMBA_ROOT_PREFIX | source
-# <<< mamba initialize <<<
+# # >>> mamba initialize >>>
+# # !! Contents within this block are managed by 'mamba shell init' !!
+# set -gx MAMBA_EXE "/usr/bin/mamba"
+# set -gx MAMBA_ROOT_PREFIX "/home/daniel/.local/share/mamba"
+# $MAMBA_EXE shell hook --shell fish --root-prefix $MAMBA_ROOT_PREFIX | source
+# # <<< mamba initialize <<<
+
+direnv hook fish | source
+
+# bun
+set --export BUN_INSTALL "$HOME/.bun"
+set --export PATH $BUN_INSTALL/bin $PATH
+
+fish_add_path -gm /home/daniel/go/bin
+
+export QT_QPA_PLATFORM=xcb
+
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv fish)"
