@@ -10,7 +10,8 @@ sudo pacman -S --noconfirm \
     wl-clipboard \
     hyprpolkitagent \
     hyprlauncher \
-    firefox
+    firefox \
+    imv
 
 echo "==> Installing yay packages..."
 yay -S --noconfirm \
