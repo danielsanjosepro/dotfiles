@@ -16,6 +16,7 @@ CONFIG_LIST=(
     i3
     i3status-rust
     rofi
+    wofi
     fish
 )
 
