@@ -14,18 +14,7 @@ layout {
         pane borderless=true command="lazygit"
     }
     tab name="Terminals" {
-        pane split_direction="vertical" {
-            pane
-            pane
-        }
-    }
-    tab name="Open Code" {
-        pane borderless=true command="opencode"
-    }
-    tab name="Diffs" {
-        pane borderless=true command="bash" {
-            args "-c" "git ls-files | entr -c git diff"
-        }
+        pane
     }
 }
 
