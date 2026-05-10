@@ -8,7 +8,7 @@ const DEFAULT_MASCOT = "invader";
 const GLOBAL_MASCOT_STATE_PATH = path.join(os.homedir(), ".pi", "agent", "mascot.json");
 const LEGACY_LOCAL_MASCOT_STATE_PATH = path.join(process.cwd(), ".pi", "agent", "mascot.json");
 
-type MascotName = "invader" | "charmander" | "umbreon";
+type MascotName = "invader" | "charmander" | "umbreon" | "squirtle";
 type StoredMascotName = MascotName | "phoenix";
 
 interface MascotState {
@@ -135,6 +135,47 @@ function getCharmander(_theme: Theme): string[] {
   return renderCompressedSprite(sprite, colors, "charmander");
 }
 
+function getSquirtle(_theme: Theme): string[] {
+  const sprite = parseSprite(
+    [
+      "..##########...######.",
+      "..##aaaab###..##aaa##.",
+      "..#aaaaaab######aabb#.",
+      ".##aaaaaaa#t###aab#b#.",
+      ".##aaaaaaabttt#bb#bb#.",
+      ".#aaaaa#aabbttt#b#b##.",
+      ".#baaa##abbbttt#####..",
+      "..#bbbb#bbb#attt##....",
+      "..##a####aaabttt#.....",
+      "..#####c#aab#ttt#.....",
+      "...####cc####ttt#.....",
+      ".....###ccccc#t##.....",
+      ".....#####cca###......",
+      "......######a###......",
+      ".........##bbb#.......",
+      "..........#####.......",
+    ],
+    {
+      ".": "empty",
+      "#": "outline",
+      "a": "lightBlue",
+      "b": "blue",
+      "t": "brown",
+      "c": "cream",
+    },
+  );
+
+  const colors = {
+    outline: "#000000",
+    lightBlue: "#3497da",
+    blue: "#006dec",
+    brown: "#98600b",
+    cream: "#f6e4a2",
+  };
+
+  return renderCompressedSprite(sprite, colors, "squirtle");
+}
+
 function getUmbreon(_theme: Theme): string[] {
   const sprite = parseSprite(
     [
@@ -190,12 +231,14 @@ const MASCOTS: Record<MascotName, (theme: Theme) => string[]> = {
   invader: getInvader,
   charmander: getCharmander,
   umbreon: getUmbreon,
+  squirtle: getSquirtle,
 };
 
 const MASCOT_DESCRIPTIONS: Record<MascotName, string> = {
   invader: "Original space invader",
   charmander: "Charmander pixel mascot",
   umbreon: "Umbreon pixel mascot",
+  squirtle: "Squirtle pixel mascot",
 };
 
 const MASCOT_ALIASES: Record<string, MascotName> = {
@@ -208,6 +251,9 @@ const MASCOT_ALIASES: Record<string, MascotName> = {
   lizard: "charmander",
   eevee: "umbreon",
   moon: "umbreon",
+  shiggy: "squirtle",
+  turtle: "squirtle",
+  water: "squirtle",
 };
 
 function normalizeMascotName(value: string): MascotName | null {
@@ -302,7 +348,7 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerCommand("mascot", {
-    description: "Set header mascot: /mascot invader | charmander | umbreon | default",
+    description: "Set header mascot: /mascot invader | charmander | umbreon | squirtle | default",
     getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
       const trimmed = prefix.trim().toLowerCase();
       const items: AutocompleteItem[] = [
@@ -318,6 +364,8 @@ export default function (pi: ExtensionAPI) {
         { value: "pokemon", label: "pokemon", description: "Alias for charmander" },
         { value: "eevee", label: "eevee", description: "Alias for umbreon" },
         { value: "moon", label: "moon", description: "Alias for umbreon" },
+        { value: "shiggy", label: "shiggy", description: "Alias for squirtle" },
+        { value: "turtle", label: "turtle", description: "Alias for squirtle" },
         { value: "list", label: "list", description: "Show mascot names" },
         { value: "status", label: "status", description: "Show current mascot" },
       ];

@@ -1,6 +1,6 @@
 {
   "defaultProvider": "github-copilot",
-  "defaultModel": "gpt-5.4",
+  "defaultModel": "claude-opus-4.5",
   "defaultThinkingLevel": "medium",
   "theme": "gruvbox-dark",
   "quietStartup": true,
@@ -12,7 +12,7 @@
     "npm:pi-tool-display"
   ],
   "extensions": [
-    "extensions/space-invader-header.ts"
+    "extensions/pokemon-header/index.ts"
   ],
   "lastChangelogVersion": "0.74.0",
   "hideThinkingBlock": true
