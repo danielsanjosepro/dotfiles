@@ -181,6 +181,10 @@ function getCurrentPokemon(slug: string): PokemonSprite {
   return POKEMON_BY_SLUG.get(slug) ?? POKEMON_BY_SLUG.get(DEFAULT_POKEMON)!;
 }
 
+function pickRandomPokemon(): string {
+  return POKEMON_SPRITES[Math.floor(Math.random() * POKEMON_SPRITES.length)].slug;
+}
+
 function installHeader(
   ctx: ExtensionContext,
   selectedSlug: string,
@@ -241,7 +245,8 @@ export default function (pi: ExtensionAPI) {
     getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
       const normalizedPrefix = normalizeKey(prefix);
       const items: AutocompleteItem[] = [
-        { value: "status", label: "status", description: "Show the current default Pokémon" },
+        { value: "random", label: "random", description: "Pick a random Pokémon (default)" },
+        { value: "status", label: "status", description: "Show the current Pokémon" },
         { value: "mode full", label: "mode full", description: "Use wider full-block rendering" },
         { value: "mode compact", label: "mode compact", description: "Use smaller compact block rendering" },
         ...POKEMON_SPRITES.map((pokemon) => ({
@@ -258,8 +263,17 @@ export default function (pi: ExtensionAPI) {
     handler: async (args, ctx) => {
       if (!ctx.hasUI) return;
 
-      const input = (args ?? "status").trim();
-      if (!input || input.toLowerCase() === "status") {
+      const input = (args ?? "").trim();
+
+      if (!input || input.toLowerCase() === "random") {
+        currentPokemon = pickRandomPokemon();
+        writeState(currentPokemon, renderMode);
+        installHeader(ctx, currentPokemon, renderMode, animation);
+        ctx.ui.notify(`Random: ${getCurrentPokemon(currentPokemon).displayName}`, "success");
+        return;
+      }
+
+      if (input.toLowerCase() === "status") {
         const pokemon = getCurrentPokemon(currentPokemon);
         ctx.ui.notify(`Pokemon header: ${pokemon.displayName} (${pokemon.slug}) · mode=${renderMode}`, "info");
         return;
