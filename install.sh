@@ -50,6 +50,7 @@ link_path "$DOTFILES_DIR/zsh/.zshrc.pre-oh-my-zsh" "$HOME/.zshrc.pre-oh-my-zsh"
 link_path "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
 link_path "$DOTFILES_DIR/.bash_prompt" "$HOME/.bash_prompt"
 link_path "$DOTFILES_DIR/.pi/agent/settings.json" "$PI_AGENT_DIR/settings.json"
+link_path "$DOTFILES_DIR/.pi/agent/extensions" "$PI_AGENT_DIR/extensions"
 
 link_path "$DOTFILES_DIR/bin/zellij_sessionizer" "$LOCAL_BIN_DIR/zellij_sessionizer"
 link_path "$DOTFILES_DIR/scripts/open-github.bash" "$LOCAL_BIN_DIR/open-github.bash"
