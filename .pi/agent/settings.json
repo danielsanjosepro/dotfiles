@@ -1,0 +1,15 @@
+{
+  "defaultProvider": "github-copilot",
+  "defaultModel": "gpt-5.4",
+  "defaultThinkingLevel": "medium",
+  "theme": "gruvbox-dark",
+  "packages": [
+    "npm:@ifi/oh-pi-themes",
+    "npm:pi-subagents",
+    "npm:@samfp/pi-memory",
+    "npm:context-mode",
+    "npm:pi-tool-display"
+  ],
+  "lastChangelogVersion": "0.74.0",
+  "hideThinkingBlock": false
+}
