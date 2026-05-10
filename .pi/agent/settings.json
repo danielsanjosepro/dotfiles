@@ -11,5 +11,5 @@
     "npm:pi-tool-display"
   ],
   "lastChangelogVersion": "0.74.0",
-  "hideThinkingBlock": false
+  "hideThinkingBlock": true
 }
