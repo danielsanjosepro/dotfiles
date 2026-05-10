@@ -74,6 +74,11 @@ end
 if command -q eza
     alias ls="eza"
 end
+
+if command -q bat
+    alias cat="bat --paging=never"
+end
+
 alias v='NVIM_APPNAME="kickstart.nvim" nvim'
 
 alias zj='zellij'

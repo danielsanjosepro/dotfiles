@@ -132,6 +132,10 @@ if command -v zoxide &> /dev/null; then
   eval "$(zoxide init zsh)"
 fi
 
+if command -v bat &> /dev/null; then
+  alias cat='bat --paging=never'
+fi
+
 # Check if brew is installed and load it
 if command -v brew &> /dev/null; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
@@ -156,3 +160,5 @@ else
 fi
 unset __mamba_setup
 # <<< mamba initialize <<<
+
+if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
