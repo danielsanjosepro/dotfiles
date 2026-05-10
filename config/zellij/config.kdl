@@ -132,6 +132,7 @@ keybinds clear-defaults=true {
             }
             SwitchToMode "normal"
         }
+        bind "q" { Quit; }
         bind "w" {
             LaunchOrFocusPlugin "session-manager" {
                 floating true
@@ -157,7 +158,17 @@ keybinds clear-defaults=true {
         bind "Alt j" { MoveFocus "down"; }
         bind "Alt k" { MoveFocus "up"; }
         bind "Alt l" { MoveFocusOrTab "right"; }
-        bind "Alt q" { Quit; }
+        bind "Alt q" {
+            Run "bash" "-lc" "$HOME/.config/zellij/scripts/confirm-quit.sh" {
+                floating true
+                close_on_exit true
+                name "confirm-quit"
+                x "25%"
+                y "30%"
+                width "50%"
+                height "10"
+            }
+        }
     }
     shared_except "locked" "move" {
         bind "Alt m" { SwitchToMode "move"; }
