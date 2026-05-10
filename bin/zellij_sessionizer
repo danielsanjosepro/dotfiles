@@ -1,39 +1,163 @@
 #!/usr/bin/env bash
 
-if [[ $# -eq 1 ]]; then
-    # Take the passed path
-    selected_path=$1
-else
-    # Check whether the machine has fd available
-    if [ -x "$(command -v fd)" ]; then
-        selected_path=$(fd . $HOME/repos $HOME/git $HOME/ros2_ws/src --min-depth 1 --max-depth 1 --type d | fzf)
-    else
-        # defer to find if not
-        selected_path=$(find $HOME/repos $HOME/git $HOME/ros2_ws/src -mindepth 1 -maxdepth 1 -type d | fzf)
+set -uo pipefail
+
+# Return the main (primary) worktree root for any path within the repo.
+# git worktree list always shows the main worktree first.
+main_worktree_of() {
+    git -C "$1" worktree list --porcelain | awk '/^worktree/{print $2; exit}'
+}
+
+# Turn a branch name into a valid zellij session name.
+branch_to_session() {
+    echo "$1" | tr '/. ' '___'
+}
+
+# Build the tab-separated fzf entry list for a given main worktree path.
+# Each line: DISPLAY \t TYPE \t DATA
+build_entries() {
+    local main_wt="$1"
+    local cur_path="" cur_branch="" wt_branches=""
+
+    # Existing linked worktrees
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^worktree[[:space:]](.+)$ ]]; then
+            cur_path="${BASH_REMATCH[1]}"
+            cur_branch=""
+        elif [[ "$line" =~ ^branch[[:space:]]refs/heads/(.+)$ ]]; then
+            cur_branch="${BASH_REMATCH[1]}"
+            if [[ "$cur_path" != "$main_wt" ]]; then
+                wt_branches+="${cur_branch}"$'\n'
+                printf '[wt]     %s\tworktree\t%s\n' "$cur_branch" "$cur_path"
+            fi
+        fi
+    done < <(git -C "$main_wt" worktree list --porcelain)
+
+    # Local branches not already represented by a worktree
+    while IFS= read -r branch; do
+        if ! printf '%s' "$wt_branches" | grep -qx "$branch"; then
+            printf '[branch] %s\tbranch\t%s\n' "$branch" "$branch"
+        fi
+    done < <(git -C "$main_wt" branch --format='%(refname:short)')
+
+    # Open PRs — requires gh
+    if command -v gh &>/dev/null; then
+        (cd "$main_wt" && gh pr list --json number,title \
+            --jq '.[] | "[pr]     #\(.number) \(.title)\tpr\t\(.number)"' 2>/dev/null) || true
     fi
+}
+
+# Run `wt switch` and return the resulting worktree path via --execute.
+wt_switch_path() {
+    local main_wt="$1"
+    shift
+    command wt -C "$main_wt" switch "$@" --execute bash -- -c 'pwd' 2>>/tmp/zellij_sessionizer.log
+}
+
+# Create or attach to a zellij session.
+open_session() {
+    local path="$1" session_name="$2"
+    if [[ -z "${ZELLIJ:-}" ]]; then
+        cd "$path" && zellij attach "$session_name" -c
+    else
+        if zellij list-sessions 2>/dev/null | grep -qw "$session_name"; then
+            zellij action switch-session "$session_name"
+        else
+            zellij action new-pane
+            zellij action write-chars "cd $path" && zellij action write 10
+        fi
+    fi
+}
+
+# ---- Main ----
+
+# Determine git context
+git_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+
+if [[ -z "$git_root" ]]; then
+    # Not in a git repo: pick a repo first
+    if command -v fd &>/dev/null; then
+        git_root=$(fd . "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
+            --min-depth 1 --max-depth 1 --type d 2>/dev/null | \
+            fzf --prompt='repo> ' --header='Select a repository')
+    else
+        git_root=$(find "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
+            -mindepth 1 -maxdepth 1 -type d 2>/dev/null | \
+            fzf --prompt='repo> ' --header='Select a repository')
+    fi
+    [[ -z "$git_root" ]] && exit 0
 fi
 
+main_wt=$(main_worktree_of "$git_root")
 
-# If no directory was selected, exit the script
-if [[ -z $selected_path ]]; then
-	exit 0
+# Tmpfile signals a ctrl-n new-branch creation; cleaned up on exit.
+tmpfile=$(mktemp /tmp/zs_branch.XXXXXX)
+trap 'rm -f "$tmpfile"' EXIT
+
+header_normal='enter: switch  ctrl-n: create new branch'
+header_warn=$'\e[33m⚠  type a branch name first, then ctrl-n\e[0m'
+
+selected=$(build_entries "$main_wt" | SHELL=/bin/bash fzf \
+    --delimiter=$'\t' \
+    --with-nth=1 \
+    --bind "ctrl-n:transform:
+        if [[ -z \$FZF_QUERY ]]; then
+            echo 'change-header($header_warn)'
+        else
+            echo \"execute-silent(printf '%s' {q} > $tmpfile)+accept\"
+        fi
+    " \
+    --bind "change:change-header($header_normal)" \
+    --header="$header_normal" \
+    --preview="
+        type=\$(printf '%s' {} | cut -f2)
+        data=\$(printf '%s' {} | cut -f3)
+        if [[ \"\$type\" == pr ]]; then
+            output=\$(cd \"$main_wt\" && gh pr view \"\$data\" 2>/dev/null || echo \"PR #\$data\")
+            if command -v bat &>/dev/null; then
+                printf '%s' \"\$output\" | bat --language=markdown --color=always --style=plain
+            else
+                printf '%s\n' \"\$output\"
+            fi
+        else
+            git -C \"$main_wt\" log --oneline --color=always -12 \"\$data\" 2>/dev/null || echo \"\$data\"
+        fi
+    " \
+    --ansi \
+    --preview-window=right:50%) || true
+
+new_branch=$(cat "$tmpfile" 2>/dev/null)
+
+if [[ -n "$new_branch" ]]; then
+    path=$(wt_switch_path "$main_wt" --create "$new_branch") || path="$main_wt"
+    session_name=$(branch_to_session "$new_branch")
+elif [[ -n "$selected" ]]; then
+    item_type=$(cut -f2 <<< "$selected")
+    item_data=$(cut -f3 <<< "$selected")
+
+    case "$item_type" in
+        worktree)
+            path="$item_data"
+            branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || basename "$path")
+            session_name=$(branch_to_session "$branch")
+            ;;
+        branch)
+            path=$(wt_switch_path "$main_wt" "$item_data") || path="$main_wt"
+            session_name=$(branch_to_session "$item_data")
+            ;;
+        pr)
+            path=$(wt_switch_path "$main_wt" "pr:$item_data") || path="$main_wt"
+            branch=$((cd "$main_wt" && gh pr view "$item_data" \
+                --json headRefName -q .headRefName) 2>/dev/null || true)
+            session_name=$(branch_to_session "${branch:-pr_$item_data}")
+            ;;
+        *)
+            exit 1
+            ;;
+    esac
+else
+    exit 0
 fi
 
-# Get the name of the selected directory, replacing "." with "_"
-session_name=$(basename "$selected_path" | tr . _)
-
-# We're outside of zellij, so lets create a new session or attach to a new one.
-if [[ -z $ZELLIJ ]]; then
-	cd $selected_path
-  
-  # -c will make zellij to either create a new session or to attach into an existing one
-	zellij attach $session_name -c
-	exit 0
-fi
-
-# We're inside zellij so we'll open a new pane and move into the selected directory
-zellij action new-pane
-
-# Hopefully they'll someday support specifying a directory and this won't be as laggy
-# thanks to @msirringhaus for getting this from the community some time ago!
-zellij action write-chars "cd $selected_path" && zellij action write 10
+[[ -z "$path" ]] && path="$main_wt"
+open_session "$path" "$session_name"
