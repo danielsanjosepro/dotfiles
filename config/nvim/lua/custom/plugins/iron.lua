@@ -1,6 +1,6 @@
 return {
   'Vigemus/iron.nvim',
-  init = function()
+  config = function()
     local iron = require 'iron.core'
     local view = require 'iron.view'
     local common = require 'iron.fts.common'
