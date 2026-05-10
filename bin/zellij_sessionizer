@@ -8,9 +8,30 @@ main_worktree_of() {
     git -C "$1" worktree list --porcelain | awk '/^worktree/{print $2; exit}'
 }
 
-# Turn a branch name into a valid zellij session name.
-branch_to_session() {
+# Sanitize a string into a valid zellij session name fragment.
+sessionize_name() {
     echo "$1" | tr '/. ' '___'
+}
+
+# Turn a repo + branch name into a valid zellij session name.
+branch_to_session() {
+    local repo_name="$1" branch_name="$2"
+    printf '%s__%s\n' "$(sessionize_name "$repo_name")" "$(sessionize_name "$branch_name")"
+}
+
+# Pick a repository root.
+pick_repo() {
+    {
+        [[ -d "$HOME/dotfiles" ]] && printf '%s\n' "$HOME/dotfiles"
+
+        if command -v fd &>/dev/null; then
+            fd . "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
+                --min-depth 1 --max-depth 1 --type d 2>/dev/null
+        else
+            find "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
+                -mindepth 1 -maxdepth 1 -type d 2>/dev/null
+        fi
+    } | awk '!seen[$0]++' | fzf --prompt='repo> ' --header='Select a repository'
 }
 
 # Build the tab-separated fzf entry list for a given main worktree path.
@@ -57,107 +78,125 @@ wt_switch_path() {
 # Create or attach to a zellij session.
 open_session() {
     local path="$1" session_name="$2"
+
     if [[ -z "${ZELLIJ:-}" ]]; then
-        cd "$path" && zellij attach "$session_name" -c
+        cd "$path" && exec zellij attach "$session_name" -c
     else
-        if zellij list-sessions 2>/dev/null | grep -qw "$session_name"; then
-            zellij action switch-session "$session_name"
-        else
-            zellij action new-pane
-            zellij action write-chars "cd $path" && zellij action write 10
-        fi
+        # Running inside zellij: switch the current client to the target session.
+        # This avoids nesting an attached session inside the current terminal.
+        zellij action switch-session --cwd "$path" "$session_name"
     fi
 }
 
 # ---- Main ----
 
 # Determine git context
-git_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+export -f pick_repo
 
-if [[ -z "$git_root" ]]; then
-    # Not in a git repo: pick a repo first
-    if command -v fd &>/dev/null; then
-        git_root=$(fd . "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
-            --min-depth 1 --max-depth 1 --type d 2>/dev/null | \
-            fzf --prompt='repo> ' --header='Select a repository')
-    else
-        git_root=$(find "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
-            -mindepth 1 -maxdepth 1 -type d 2>/dev/null | \
-            fzf --prompt='repo> ' --header='Select a repository')
-    fi
-    [[ -z "$git_root" ]] && exit 0
+force_repo_picker=false
+if [[ "${1:-}" == "--repo" || "${1:-}" == "--pick-repo" ]]; then
+    force_repo_picker=true
 fi
 
-main_wt=$(main_worktree_of "$git_root")
+if [[ "$force_repo_picker" == true ]]; then
+    git_root=$(pick_repo)
+else
+    git_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+    if [[ -z "$git_root" ]]; then
+        git_root=$(pick_repo)
+    fi
+fi
 
-# Tmpfile signals a ctrl-n new-branch creation; cleaned up on exit.
+[[ -z "$git_root" ]] && exit 0
+
+# Tmpfiles signal ctrl-n new-branch creation and ctrl-r repo switching.
 tmpfile=$(mktemp /tmp/zs_branch.XXXXXX)
-trap 'rm -f "$tmpfile"' EXIT
+repo_tmpfile=$(mktemp /tmp/zs_repo.XXXXXX)
+trap 'rm -f "$tmpfile" "$repo_tmpfile"' EXIT
 
-header_normal='enter: switch  ctrl-n: create new branch'
+header_normal='enter: switch  ctrl-n: create new branch  ctrl-r: change repo'
 header_warn=$'\e[33m⚠  type a branch name first, then ctrl-n\e[0m'
 
-selected=$(build_entries "$main_wt" | SHELL=/bin/bash fzf \
-    --delimiter=$'\t' \
-    --with-nth=1 \
-    --bind "ctrl-n:transform:
-        if [[ -z \$FZF_QUERY ]]; then
-            echo 'change-header($header_warn)'
-        else
-            echo \"execute-silent(printf '%s' {q} > $tmpfile)+accept\"
-        fi
-    " \
-    --bind "change:change-header($header_normal)" \
-    --header="$header_normal" \
-    --preview="
-        type=\$(printf '%s' {} | cut -f2)
-        data=\$(printf '%s' {} | cut -f3)
-        if [[ \"\$type\" == pr ]]; then
-            output=\$(cd \"$main_wt\" && gh pr view \"\$data\" 2>/dev/null || echo \"PR #\$data\")
-            if command -v bat &>/dev/null; then
-                printf '%s' \"\$output\" | bat --language=markdown --color=always --style=plain
+while true; do
+    main_wt=$(main_worktree_of "$git_root")
+    repo_name=$(basename "$main_wt")
+    : > "$tmpfile"
+    : > "$repo_tmpfile"
+
+    selected=$(build_entries "$main_wt" | SHELL=/bin/bash fzf \
+        --delimiter=$'\t' \
+        --with-nth=1 \
+        --bind "ctrl-n:transform:
+            if [[ -z \$FZF_QUERY ]]; then
+                echo 'change-header($header_warn)'
             else
-                printf '%s\n' \"\$output\"
+                echo \"execute-silent(printf '%s' {q} > $tmpfile)+accept\"
             fi
-        else
-            git -C \"$main_wt\" log --oneline --color=always -12 \"\$data\" 2>/dev/null || echo \"\$data\"
+        " \
+        --bind "ctrl-r:execute-silent(printf '%s' '__PICK_REPO__' > $repo_tmpfile)+accept" \
+        --bind "change:change-header($header_normal)" \
+        --header="$header_normal" \
+        --preview="
+            type=\$(printf '%s' {} | cut -f2)
+            data=\$(printf '%s' {} | cut -f3)
+            if [[ \"\$type\" == pr ]]; then
+                output=\$(cd \"$main_wt\" && gh pr view \"\$data\" 2>/dev/null || echo \"PR #\$data\")
+                if command -v bat &>/dev/null; then
+                    printf '%s' \"\$output\" | bat --language=markdown --color=always --style=plain
+                else
+                    printf '%s\n' \"\$output\"
+                fi
+            else
+                git -C \"$main_wt\" log --oneline --color=always -12 \"\$data\" 2>/dev/null || echo \"\$data\"
+            fi
+        " \
+        --ansi \
+        --preview-window=right:50%) || true
+
+    repo_switch=$(cat "$repo_tmpfile" 2>/dev/null)
+    if [[ "$repo_switch" == '__PICK_REPO__' ]]; then
+        repo_switch=$(pick_repo)
+        if [[ -n "$repo_switch" ]]; then
+            git_root="$repo_switch"
         fi
-    " \
-    --ansi \
-    --preview-window=right:50%) || true
+        continue
+    fi
 
-new_branch=$(cat "$tmpfile" 2>/dev/null)
+    new_branch=$(cat "$tmpfile" 2>/dev/null)
 
-if [[ -n "$new_branch" ]]; then
-    path=$(wt_switch_path "$main_wt" --create "$new_branch") || path="$main_wt"
-    session_name=$(branch_to_session "$new_branch")
-elif [[ -n "$selected" ]]; then
-    item_type=$(cut -f2 <<< "$selected")
-    item_data=$(cut -f3 <<< "$selected")
+    if [[ -n "$new_branch" ]]; then
+        path=$(wt_switch_path "$main_wt" --create "$new_branch") || path="$main_wt"
+        session_name=$(branch_to_session "$repo_name" "$new_branch")
+        break
+    elif [[ -n "$selected" ]]; then
+        item_type=$(cut -f2 <<< "$selected")
+        item_data=$(cut -f3 <<< "$selected")
 
-    case "$item_type" in
-        worktree)
-            path="$item_data"
-            branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || basename "$path")
-            session_name=$(branch_to_session "$branch")
-            ;;
-        branch)
-            path=$(wt_switch_path "$main_wt" "$item_data") || path="$main_wt"
-            session_name=$(branch_to_session "$item_data")
-            ;;
-        pr)
-            path=$(wt_switch_path "$main_wt" "pr:$item_data") || path="$main_wt"
-            branch=$((cd "$main_wt" && gh pr view "$item_data" \
-                --json headRefName -q .headRefName) 2>/dev/null || true)
-            session_name=$(branch_to_session "${branch:-pr_$item_data}")
-            ;;
-        *)
-            exit 1
-            ;;
-    esac
-else
-    exit 0
-fi
+        case "$item_type" in
+            worktree)
+                path="$item_data"
+                branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || basename "$path")
+                session_name=$(branch_to_session "$repo_name" "$branch")
+                ;;
+            branch)
+                path=$(wt_switch_path "$main_wt" "$item_data") || path="$main_wt"
+                session_name=$(branch_to_session "$repo_name" "$item_data")
+                ;;
+            pr)
+                path=$(wt_switch_path "$main_wt" "pr:$item_data") || path="$main_wt"
+                branch=$(cd "$main_wt" && gh pr view "$item_data" \
+                    --json headRefName -q .headRefName 2>/dev/null || true)
+                session_name=$(branch_to_session "$repo_name" "${branch:-pr_$item_data}")
+                ;;
+            *)
+                exit 1
+                ;;
+        esac
+        break
+    else
+        exit 0
+    fi
+done
 
 [[ -z "$path" ]] && path="$main_wt"
 open_session "$path" "$session_name"
