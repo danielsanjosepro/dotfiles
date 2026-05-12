@@ -8,7 +8,8 @@ PI_AGENT_DIR="$HOME/.pi/agent"
 PI_EXTENSIONS_DIR="$HOME/.pi/agent/extensions"
 PI_SKILLS_DIR="$HOME/.pi/agent/skills"
 
-mkdir -p "$PI_AGENT_DIR" "$PI_EXTENSIONS_DIR"
+mkdir -p "$PI_AGENT_DIR" 
+mkdir -p "$PI_EXTENSIONS_DIR"
 
 link_path() {
 	local source="$1"

@@ -1,6 +1,7 @@
 #!/bin/bash
 # Make sure that the Screenshot directory exists
-mkdir ~/Pictures/Screenshots
+mkdir -p ~/Pictures/Screenshots
 
-# Take a screenshot of the current window and save it to the desktop
-grim -g "$(slurp)" ~/Pictures/Screenshots/$(date +%s).png | wl-copy -t image/png 
+# Take a screenshot of a selected region, save it, and copy to clipboard
+FILE=~/Pictures/Screenshots/$(date +%s).png
+grim -g "$(slurp)" "$FILE" && wl-copy -t image/png < "$FILE"

@@ -13,12 +13,30 @@ sessionize_name() {
     echo "$1" | tr '/. ' '___'
 }
 
-# Turn a repo + branch name into a valid zellij session name (max 50 chars).
+# Turn a repo + branch name into a valid zellij session name.
+# Caps the total length so the resulting unix socket path stays under the
+# kernel's 108-byte sun_path limit (zellij prepends $XDG_RUNTIME_DIR/zellij/
+# contract_version_<N>/, ~41 bytes on typical Linux setups). When the name
+# would overflow, the branch portion is truncated and a short hash of the
+# original branch is appended to keep the name unique.
 branch_to_session() {
     local repo_name="$1" branch_name="$2"
-    local full
-    full=$(printf '%s__%s' "$(sessionize_name "$repo_name")" "$(sessionize_name "$branch_name")")
-    printf '%s\n' "${full:0:50}"
+    local max_len=60
+    local repo_clean branch_clean session
+    repo_clean=$(sessionize_name "$repo_name")
+    branch_clean=$(sessionize_name "$branch_name")
+    session="${repo_clean}__${branch_clean}"
+
+    if (( ${#session} > max_len )); then
+        local hash budget
+        hash=$(printf '%s' "$branch_name" | sha1sum | cut -c1-7)
+        budget=$(( max_len - ${#repo_clean} - 2 - 1 - 7 ))
+        (( budget < 1 )) && budget=1
+        branch_clean="${branch_clean:0:budget}"
+        session="${repo_clean}__${branch_clean}_${hash}"
+    fi
+
+    printf '%s\n' "$session"
 }
 
 # Pick a repository root.

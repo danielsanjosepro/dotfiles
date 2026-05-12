@@ -9,7 +9,8 @@
     "npm:pi-subagents",
     "npm:@samfp/pi-memory",
     "npm:context-mode",
-    "npm:pi-tool-display"
+    "npm:pi-tool-display",
+    "npm:@juicesharp/rpiv-ask-user-question"
   ],
   "extensions": [
     "extensions/pokemon-header/index.ts"

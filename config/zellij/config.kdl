@@ -180,7 +180,7 @@ keybinds clear-defaults=true {
         bind "Alt o" { SwitchToMode "session"; }
     }
     shared_except "locked" "scroll" {
-        bind "Alt e" { SwitchToMode "scroll"; EditScrollback; SwitchToMode "normal"; }
+        bind "Alt e" { EditScrollback; }
     }
     shared_except "locked" "scroll" "search" "tmux" {
         bind "Ctrl b" { SwitchToMode "tmux"; }

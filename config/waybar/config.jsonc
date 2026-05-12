@@ -35,9 +35,9 @@
             ]
         },
         "on-click": "pavucontrol",
-        "on-click-right": "pamixer -t",
-        "on-scroll-up": "pamixer -i 5",
-        "on-scroll-down": "pamixer -d 5",
+        "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+        "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
+        "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -5%",
         "tooltip": true
     },
     "network": {
