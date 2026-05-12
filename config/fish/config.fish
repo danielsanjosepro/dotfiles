@@ -19,6 +19,7 @@ set --export PATH $BUN_INSTALL/bin $PATH
 load_env_file $HOME/.env
 
 export EDITOR="nvim"
+export PI_OFFLINE=1  # Suppress verbose package update notifications (use /show-available-updates instead)
 export QT_QPA_PLATFORM=xcb
 
 # === CLI TOOL INITIALIZATION ===

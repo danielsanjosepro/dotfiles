@@ -1,0 +1,19 @@
+{
+  "defaultProvider": "github-copilot",
+  "defaultModel": "gpt-5.5",
+  "defaultThinkingLevel": "medium",
+  "theme": "gruvbox-dark",
+  "quietStartup": true,
+  "packages": [
+    "npm:@ifi/oh-pi-themes",
+    "npm:pi-subagents",
+    "npm:@samfp/pi-memory",
+    "npm:context-mode",
+    "npm:pi-tool-display"
+  ],
+  "extensions": [
+    "extensions/pokemon-header/index.ts"
+  ],
+  "lastChangelogVersion": "0.74.0",
+  "hideThinkingBlock": true
+}

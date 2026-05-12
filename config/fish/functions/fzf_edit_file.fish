@@ -3,7 +3,13 @@ function fzf_edit_file
         return
     end
 
-    set -l file (fzf --walker=file,hidden,follow --scheme=path --height=40% --reverse)
+    set -l file (fzf \
+        --walker=file,hidden,follow \
+        --scheme=path \
+        --height=40% \
+        --reverse \
+        --preview='if command -q bat; bat --style=numbers --color=always --line-range=:500 -- {}; else; cat -- {}; end' \
+        --preview-window=right:60%:wrap)
     if test -z "$file"
         commandline -f repaint
         return
