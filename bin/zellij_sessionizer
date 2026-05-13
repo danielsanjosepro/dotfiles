@@ -81,10 +81,11 @@ build_entries() {
         fi
     done < <(git -C "$main_wt" branch --format='%(refname:short)')
 
-    # Open PRs — requires gh
+    # Open PRs — requires gh. Embed headRefName so we can short-circuit to an
+    # existing worktree without paying the `wt switch pr:N` round-trip.
     if command -v gh &>/dev/null; then
-        (cd "$main_wt" && gh pr list --json number,title \
-            --jq '.[] | "[pr]     #\(.number) \(.title)\tpr\t\(.number)"' 2>/dev/null) || true
+        (cd "$main_wt" && gh pr list --json number,title,headRefName \
+            --jq '.[] | "[pr]     #\(.number) \(.title)\tpr\t\(.number):\(.headRefName)"' 2>/dev/null) || true
     fi
 }
 
@@ -160,7 +161,8 @@ while true; do
             type=\$(printf '%s' {} | cut -f2)
             data=\$(printf '%s' {} | cut -f3)
             if [[ \"\$type\" == pr ]]; then
-                output=\$(cd \"$main_wt\" && gh pr view \"\$data\" 2>/dev/null || echo \"PR #\$data\")
+                pr_num=\${data%%:*}
+                output=\$(cd \"$main_wt\" && gh pr view \"\$pr_num\" 2>/dev/null || echo \"PR #\$pr_num\")
                 if command -v bat &>/dev/null; then
                     printf '%s' \"\$output\" | bat --language=markdown --color=always --style=plain
                 else
@@ -203,10 +205,39 @@ while true; do
                 session_name=$(branch_to_session "$repo_name" "$item_data")
                 ;;
             pr)
-                path=$(wt_switch_path "$main_wt" "pr:$item_data") || path="$main_wt"
-                branch=$(cd "$main_wt" && gh pr view "$item_data" \
-                    --json headRefName -q .headRefName 2>/dev/null || true)
-                session_name=$(branch_to_session "$repo_name" "${branch:-pr_$item_data}")
+                if [[ "$item_data" == *:* ]]; then
+                    pr_number="${item_data%%:*}"
+                    head_branch="${item_data#*:}"
+                else
+                    pr_number="$item_data"
+                    head_branch=""
+                fi
+
+                # Fast path: if a worktree already exists for the PR's head
+                # branch, jump straight to it instead of invoking `wt switch`.
+                existing_wt=""
+                if [[ -n "$head_branch" ]]; then
+                    existing_wt=$(git -C "$main_wt" worktree list --porcelain | \
+                        awk -v ref="refs/heads/$head_branch" '
+                            $1 == "worktree" { wt = $2 }
+                            $1 == "branch" && $2 == ref { print wt; exit }
+                        ')
+                fi
+
+                if [[ -n "$existing_wt" ]]; then
+                    path="$existing_wt"
+                    branch="$head_branch"
+                else
+                    path=$(wt_switch_path "$main_wt" "pr:$pr_number") || path=""
+                    if [[ -n "$path" && "$path" != "$main_wt" ]]; then
+                        branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+                    else
+                        path="$main_wt"
+                        branch="${head_branch:-$(cd "$main_wt" && gh pr view "$pr_number" \
+                            --json headRefName -q .headRefName 2>/dev/null || true)}"
+                    fi
+                fi
+                session_name=$(branch_to_session "$repo_name" "${branch:-pr_$pr_number}")
                 ;;
             *)
                 exit 1
