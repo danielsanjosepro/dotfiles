@@ -234,6 +234,9 @@ end
 vim.api.nvim_create_user_command('RemapWord', remap_word, { nargs = '+' })
 
 vim.filetype.add {
+  extension = {
+    dump = 'markdown',
+  },
   pattern = {
     ['.*/hypr/.*%.conf'] = 'hyprlang',
     ['.*/dunst/dunstrc'] = 'toml',
