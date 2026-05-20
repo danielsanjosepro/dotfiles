@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Install missing nerd fonts via yay
+
+NERD_FONTS=(
+    ttf-jetbrains-mono-nerd
+    ttf-firacode-nerd
+    ttf-hack-nerd
+    ttf-meslo-nerd
+    ttf-nerd-fonts-symbols
+)
+
+missing=()
+
+for font in "${NERD_FONTS[@]}"; do
+    if ! pacman -Q "$font" &>/dev/null; then
+        missing+=("$font")
+    fi
+done
+
+if [ ${#missing[@]} -eq 0 ]; then
+    echo "All nerd fonts already installed."
+    exit 0
+fi
+
+echo "Missing nerd fonts:"
+for font in "${missing[@]}"; do
+    echo "  - $font"
+done
+
+read -rp "Install missing fonts? [Y/n] " answer
+if [[ "${answer,,}" =~ ^(n|no)$ ]]; then
+    echo "Aborted."
+    exit 0
+fi
+
+yay -S --noconfirm "${missing[@]}"
+echo "Done."

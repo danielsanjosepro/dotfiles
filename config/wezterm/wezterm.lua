@@ -7,6 +7,8 @@ local font = wezterm.font_with_fallback({
 })
 config.font_size = 18.0
 
+config.color_scheme = "GruvboxDark"
+
 config.enable_tab_bar = true
 config.enable_wayland = false
 config.use_fancy_tab_bar = true

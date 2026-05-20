@@ -5,11 +5,14 @@
 keybinds clear-defaults=true {
     normal {
         bind "Ctrl f" {
-            LaunchOrFocusPlugin "file:/home/daniel/.config/zellij/plugins/zellij-sessionizer.wasm" {
+            Run "bash" "-lc" "$HOME/.local/bin/zellij_sessionizer" {
                 floating true
-                move_to_focused_tab true
-                root_dirs "/home/daniel/repos;/home/franka/repos;"
-                session_layout "3panes"
+                close_on_exit true
+                name "zellij-sessionizer"
+                x "10%"
+                y "6%"
+                width "80%"
+                height "88%"
             }
         }
     }
@@ -132,6 +135,7 @@ keybinds clear-defaults=true {
             }
             SwitchToMode "normal"
         }
+        bind "q" { Quit; }
         bind "w" {
             LaunchOrFocusPlugin "session-manager" {
                 floating true
@@ -150,13 +154,24 @@ keybinds clear-defaults=true {
         bind "Alt =" { Resize "Increase"; }
         bind "Alt [" { PreviousSwapLayout; }
         bind "Alt ]" { NextSwapLayout; }
+        bind "Alt d" { Detach; }
         bind "Alt g" { SwitchToMode "locked"; }
         bind "Alt h" { MoveFocusOrTab "left"; }
         bind "Alt i" { MoveTab "left"; }
         bind "Alt j" { MoveFocus "down"; }
         bind "Alt k" { MoveFocus "up"; }
         bind "Alt l" { MoveFocusOrTab "right"; }
-        bind "Alt q" { Quit; }
+        bind "Alt q" {
+            Run "bash" "-lc" "$HOME/.config/zellij/scripts/confirm-quit.sh" {
+                floating true
+                close_on_exit true
+                name "confirm-quit"
+                x "25%"
+                y "30%"
+                width "50%"
+                height "10"
+            }
+        }
     }
     shared_except "locked" "move" {
         bind "Alt m" { SwitchToMode "move"; }
@@ -165,7 +180,7 @@ keybinds clear-defaults=true {
         bind "Alt o" { SwitchToMode "session"; }
     }
     shared_except "locked" "scroll" {
-        bind "Alt e" { SwitchToMode "scroll"; EditScrollback; SwitchToMode "normal"; }
+        bind "Alt e" { EditScrollback; }
     }
     shared_except "locked" "scroll" "search" "tmux" {
         bind "Ctrl b" { SwitchToMode "tmux"; }

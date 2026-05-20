@@ -1,39 +1,73 @@
-#!/bin/bash 
+#!/bin/bash
 
-# Get the directory of the script
-DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+set -euo pipefail
 
-# List of folders to simlink
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 CONFIG_LIST=(
-    dunst
-    hypr 
-    kitty 
-    nvim 
-    darktable 
-    waybar 
-    vis 
-    zellij
-    i3
-    i3status-rust
-    rofi
-    fish
+	dunst
+	hypr
+	nvim
+	darktable
+	waybar
+	vis
+	wezterm
+	zellij
+	i3
+	i3status-rust
+	rofi
+	wofi
+	fish
 )
 
-CONFIG_DIR=~/.config
+CONFIG_DIR="$HOME/.config"
+LOCAL_BIN_DIR="$HOME/.local/bin"
 
-for NAME in ${CONFIG_LIST[@]}; do
-    ln -s -f $DOTFILES_DIR/config/$NAME $CONFIG_DIR/$NAME 
+mkdir -p "$CONFIG_DIR" "$LOCAL_BIN_DIR"
+
+link_path() {
+	local source="$1"
+	local target="$2"
+
+	rm -rf "$target"
+	ln -s "$source" "$target"
+}
+
+echo "Linking configs..."
+for NAME in "${CONFIG_LIST[@]}"; do
+	echo "  $NAME"
+	link_path "$DOTFILES_DIR/config/$NAME" "$CONFIG_DIR/$NAME"
 done
 
-# List of files to simlink
-ln -s -f $DOTFILES_DIR/zsh/.zshrc ~/.zshrc
-ln -s -f $DOTFILES_DIR/zsh/.p10k.zsh ~/.p10k.zsh
-ln -s -f $DOTFILES_DIR/zsh/.p10k_simple.zsh ~/.p10k_simple.zsh
-ln -s -f $DOTFILES_DIR/zsh/.p10k_complex.zsh ~/.p10k_complex.zsh
-ln -s -f $DOTFILES_DIR/zsh/.zshrc.pre-oh-my-zsh ~/.zshrc.pre-oh-my-zsh
+echo "Linking dotfiles..."
+link_path "$DOTFILES_DIR/zsh/.zshrc"               "$HOME/.zshrc"               && echo "  .zshrc"
+link_path "$DOTFILES_DIR/zsh/.p10k.zsh"            "$HOME/.p10k.zsh"            && echo "  .p10k.zsh"
+link_path "$DOTFILES_DIR/zsh/.p10k_simple.zsh"     "$HOME/.p10k_simple.zsh"     && echo "  .p10k_simple.zsh"
+link_path "$DOTFILES_DIR/zsh/.p10k_complex.zsh"    "$HOME/.p10k_complex.zsh"    && echo "  .p10k_complex.zsh"
+link_path "$DOTFILES_DIR/zsh/.zshrc.pre-oh-my-zsh" "$HOME/.zshrc.pre-oh-my-zsh" && echo "  .zshrc.pre-oh-my-zsh"
+link_path "$DOTFILES_DIR/.gitconfig"               "$HOME/.gitconfig"           && echo "  .gitconfig"
+link_path "$DOTFILES_DIR/.bash_prompt"             "$HOME/.bash_prompt"         && echo "  .bash_prompt"
 
-ln -s -f $DOTFILES_DIR/.gitconfig ~/.gitconfig
-ln -s -f $DOTFILES_DIR/.bash_prompt ~/.bash_prompt
+echo "Linking bin..."
+link_path "$DOTFILES_DIR/bin/zellij_sessionizer"    "$LOCAL_BIN_DIR/zellij_sessionizer" && echo "  zellij_sessionizer"
+link_path "$DOTFILES_DIR/scripts/open-github.bash"  "$LOCAL_BIN_DIR/open-github.bash"   && echo "  open-github.bash"
 
-ln -s $DOTFILES_DIR/bin/zellij_sessionizer $HOME/.local/bin/zellij_sessionizer
-ln -s $DOTFILES_DIR/scripts/open-github.bash $HOME/.local/bin/open-github.bash
+echo "Done."
+
+ask() {
+	local prompt="$1"
+	local default="${2:-n}"
+	local hint
+	[[ "$default" == "y" ]] && hint="[Y/n]" || hint="[y/N]"
+	read -r -p "$prompt $hint " answer
+	local reply="${answer:-$default}"
+	[[ "${reply,,}" == "y" ]]
+}
+
+if ask "Run Pi install?" y; then
+	bash "$DOTFILES_DIR/scripts/install-pi.sh"
+fi
+
+if ask "Run full desktop install?" n; then
+	bash "$DOTFILES_DIR/scripts/desktop-post-install.sh"
+fi

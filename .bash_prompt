@@ -25,4 +25,26 @@ __bash_prompt() {
 }
 __bash_prompt
 
+__fzf_edit_file_widget() {
+    command -v fzf >/dev/null 2>&1 || return
+
+    local file
+    file=$(fzf \
+        --walker=file,hidden,follow \
+        --scheme=path \
+        --height=40% \
+        --reverse \
+        --preview='if command -v bat >/dev/null 2>&1; then bat --style=numbers --color=always --line-range=:500 -- {}; else cat -- {}; fi' \
+        --preview-window=right:60%:wrap) || return
+
+    READLINE_LINE=""
+    READLINE_POINT=0
+
+    local quoted_file
+    printf -v quoted_file '%q' "$file"
+    eval "${EDITOR:-vi} $quoted_file"
+}
+
+bind -x '"\C-e":"__fzf_edit_file_widget"'
+
 set -o vi
