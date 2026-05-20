@@ -255,7 +255,7 @@ workspace 1 output $left_screen
 workspace 2 output $right_screen
 workspace 3 output $right_screen
 
-bindsym $mod+Shift+Return exec "xrandr --output DisplayPort-3 --auto --right-of eDP"
+bindsym $mod+Shift+Return exec "xrandr --output Screen --auto --right-of eDP"
 
 bindsym $mod+Shift+Right move workspace to output right
 bindsym $mod+Shift+Left move workspace to output left
