@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+#
+# tmux sessionizer with fuzzy finding + worktrunk worktrees, and a live Claude
+# state indicator per session (orange = idle/awaiting, red = needs attention,
+# blue = working). The indicator is fed by the `claude-tmux-notify` hook.
+#
+# Each session created here is split: left pane = shell, right pane = `claude`.
+
+set -uo pipefail
+
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/tmux-sessionizer/state"
+
+# Return the main (primary) worktree root for any path within the repo.
+# git worktree list always shows the main worktree first.
+main_worktree_of() {
+    git -C "$1" worktree list --porcelain | awk '/^worktree/{print $2; exit}'
+}
+
+# Sanitize a string into a valid tmux/session name fragment.
+sessionize_name() {
+    echo "$1" | tr '/. ' '___'
+}
+
+# Turn a repo + branch name into a tmux session name. tmux session names must
+# not contain '.' or ':'; we also keep things short and unique.
+branch_to_session() {
+    local repo_name="$1" branch_name="$2"
+    local max_len=60
+    local repo_clean branch_clean session
+    repo_clean=$(sessionize_name "$repo_name")
+    branch_clean=$(sessionize_name "$branch_name")
+    session="${repo_clean}__${branch_clean}"
+
+    if (( ${#session} > max_len )); then
+        local hash budget
+        hash=$(printf '%s' "$branch_name" | sha1sum | cut -c1-7)
+        budget=$(( max_len - ${#repo_clean} - 2 - 1 - 7 ))
+        (( budget < 1 )) && budget=1
+        branch_clean="${branch_clean:0:budget}"
+        session="${repo_clean}__${branch_clean}_${hash}"
+    fi
+
+    printf '%s\n' "$session"
+}
+
+# ANSI-colored dot reflecting the recorded Claude state for a session name,
+# followed by a space; empty (two spaces) when there is no state. Used to
+# prefix entries in the fzf list (snapshot at open time).
+state_marker() {
+    local session="${1//\//_}"
+    local f="$STATE_DIR/$session"
+    [[ -r "$f" ]] || { printf '  '; return; }
+    case "$(<"$f")" in
+        idle)      printf '\033[38;5;208m●\033[0m ' ;;  # orange
+        attention) printf '\033[38;5;196m●\033[0m ' ;;  # red
+        working)   printf '\033[38;5;39m●\033[0m '  ;;  # blue
+        *)         printf '  ' ;;
+    esac
+}
+
+# Pick a repository root.
+pick_repo() {
+    {
+        [[ -d "$HOME/dotfiles" ]] && printf '%s\n' "$HOME/dotfiles"
+
+        if command -v fd &>/dev/null; then
+            fd . "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
+                --min-depth 1 --max-depth 1 --type d 2>/dev/null
+        else
+            find "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
+                -mindepth 1 -maxdepth 1 -type d 2>/dev/null
+        fi
+    } | awk '!seen[$0]++' | fzf --prompt='repo> ' --header='Select a repository'
+}
+
+# Build the tab-separated fzf entry list for a given main worktree path.
+# Each line: DISPLAY \t TYPE \t DATA
+# DISPLAY is prefixed with a Claude-state dot for the session it maps to.
+build_entries() {
+    local main_wt="$1" repo_name="$2"
+    local cur_path="" cur_branch="" wt_branches=""
+
+    # Existing linked worktrees
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^worktree[[:space:]](.+)$ ]]; then
+            cur_path="${BASH_REMATCH[1]}"
+            cur_branch=""
+        elif [[ "$line" =~ ^branch[[:space:]]refs/heads/(.+)$ ]]; then
+            cur_branch="${BASH_REMATCH[1]}"
+            if [[ "$cur_path" != "$main_wt" ]]; then
+                wt_branches+="${cur_branch}"$'\n'
+                printf '%s[wt]     %s\tworktree\t%s\n' \
+                    "$(state_marker "$(branch_to_session "$repo_name" "$cur_branch")")" \
+                    "$cur_branch" "$cur_path"
+            fi
+        fi
+    done < <(git -C "$main_wt" worktree list --porcelain)
+
+    # Local branches not already represented by a worktree
+    while IFS= read -r branch; do
+        if ! printf '%s' "$wt_branches" | grep -qx "$branch"; then
+            printf '%s[branch] %s\tbranch\t%s\n' \
+                "$(state_marker "$(branch_to_session "$repo_name" "$branch")")" \
+                "$branch" "$branch"
+        fi
+    done < <(git -C "$main_wt" branch --format='%(refname:short)')
+
+    # Open PRs — requires gh. Embed headRefName so we can short-circuit to an
+    # existing worktree without paying the `wt switch pr:N` round-trip.
+    if command -v gh &>/dev/null; then
+        (cd "$main_wt" && gh pr list --json number,title,headRefName \
+            --jq '.[] | "[pr]     #\(.number) \(.title)\tpr\t\(.number):\(.headRefName)"' 2>/dev/null) \
+        | while IFS=$'\t' read -r disp typ data; do
+            local head_branch="${data#*:}"
+            printf '%s%s\t%s\t%s\n' \
+                "$(state_marker "$(branch_to_session "$repo_name" "$head_branch")")" \
+                "$disp" "$typ" "$data"
+        done || true
+    fi
+}
+
+# Run `wt switch` and return the resulting worktree path via --execute.
+wt_switch_path() {
+    local main_wt="$1"
+    shift
+    command wt -C "$main_wt" switch "$@" --execute bash -- -c 'pwd' 2>>/tmp/tmux_sessionizer.log
+}
+
+# Create the session (split: left shell, right claude) if it does not exist,
+# then attach or switch to it.
+open_session() {
+    local path="$1" session_name="$2"
+
+    if ! tmux has-session -t "=$session_name" 2>/dev/null; then
+        tmux new-session -d -s "$session_name" -c "$path"
+        tmux split-window -h -t "=$session_name:" -c "$path"
+        tmux send-keys -t "=$session_name:.1" 'claude' C-m
+        tmux select-pane -t "=$session_name:.0"
+    fi
+
+    if [[ -z "${TMUX:-}" ]]; then
+        exec tmux attach -t "=$session_name"
+    else
+        tmux switch-client -t "=$session_name"
+    fi
+}
+
+# ---- Main ----
+
+export -f pick_repo
+
+force_repo_picker=false
+if [[ "${1:-}" == "--repo" || "${1:-}" == "--pick-repo" ]]; then
+    force_repo_picker=true
+fi
+
+if [[ "$force_repo_picker" == true ]]; then
+    git_root=$(pick_repo)
+else
+    git_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+    if [[ -z "$git_root" ]]; then
+        git_root=$(pick_repo)
+    fi
+fi
+
+[[ -z "$git_root" ]] && exit 0
+
+# Tmpfiles signal ctrl-n new-branch creation and ctrl-r repo switching.
+tmpfile=$(mktemp /tmp/ts_branch.XXXXXX)
+repo_tmpfile=$(mktemp /tmp/ts_repo.XXXXXX)
+trap 'rm -f "$tmpfile" "$repo_tmpfile"' EXIT
+
+header_normal='enter: switch  ctrl-n: create new branch  ctrl-r: change repo'
+header_warn=$'\e[33m⚠  type a branch name first, then ctrl-n\e[0m'
+
+while true; do
+    main_wt=$(main_worktree_of "$git_root")
+    repo_name=$(basename "$main_wt")
+    : > "$tmpfile"
+    : > "$repo_tmpfile"
+
+    selected=$(build_entries "$main_wt" "$repo_name" | SHELL=/bin/bash fzf \
+        --delimiter=$'\t' \
+        --with-nth=1 \
+        --ansi \
+        --bind "ctrl-n:transform:
+            if [[ -z \$FZF_QUERY ]]; then
+                echo 'change-header($header_warn)'
+            else
+                echo \"execute-silent(printf '%s' {q} > $tmpfile)+accept\"
+            fi
+        " \
+        --bind "ctrl-r:execute-silent(printf '%s' '__PICK_REPO__' > $repo_tmpfile)+accept" \
+        --bind "change:change-header($header_normal)" \
+        --header="$header_normal" \
+        --preview="
+            type=\$(printf '%s' {} | cut -f2)
+            data=\$(printf '%s' {} | cut -f3)
+            if [[ \"\$type\" == pr ]]; then
+                pr_num=\${data%%:*}
+                output=\$(cd \"$main_wt\" && gh pr view \"\$pr_num\" 2>/dev/null || echo \"PR #\$pr_num\")
+                if command -v bat &>/dev/null; then
+                    printf '%s' \"\$output\" | bat --language=markdown --color=always --style=plain
+                else
+                    printf '%s\n' \"\$output\"
+                fi
+            else
+                git -C \"$main_wt\" log --oneline --color=always -12 \"\$data\" 2>/dev/null || echo \"\$data\"
+            fi
+        " \
+        --preview-window=right:50%) || true
+
+    repo_switch=$(cat "$repo_tmpfile" 2>/dev/null)
+    if [[ "$repo_switch" == '__PICK_REPO__' ]]; then
+        repo_switch=$(pick_repo)
+        if [[ -n "$repo_switch" ]]; then
+            git_root="$repo_switch"
+        fi
+        continue
+    fi
+
+    new_branch=$(cat "$tmpfile" 2>/dev/null)
+
+    if [[ -n "$new_branch" ]]; then
+        path=$(wt_switch_path "$main_wt" --create "$new_branch") || path="$main_wt"
+        session_name=$(branch_to_session "$repo_name" "$new_branch")
+        break
+    elif [[ -n "$selected" ]]; then
+        item_type=$(cut -f2 <<< "$selected")
+        item_data=$(cut -f3 <<< "$selected")
+
+        case "$item_type" in
+            worktree)
+                path="$item_data"
+                branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || basename "$path")
+                session_name=$(branch_to_session "$repo_name" "$branch")
+                ;;
+            branch)
+                path=$(wt_switch_path "$main_wt" "$item_data") || path="$main_wt"
+                session_name=$(branch_to_session "$repo_name" "$item_data")
+                ;;
+            pr)
+                if [[ "$item_data" == *:* ]]; then
+                    pr_number="${item_data%%:*}"
+                    head_branch="${item_data#*:}"
+                else
+                    pr_number="$item_data"
+                    head_branch=""
+                fi
+
+                # Fast path: if a worktree already exists for the PR's head
+                # branch, jump straight to it instead of invoking `wt switch`.
+                existing_wt=""
+                if [[ -n "$head_branch" ]]; then
+                    existing_wt=$(git -C "$main_wt" worktree list --porcelain | \
+                        awk -v ref="refs/heads/$head_branch" '
+                            $1 == "worktree" { wt = $2 }
+                            $1 == "branch" && $2 == ref { print wt; exit }
+                        ')
+                fi
+
+                if [[ -n "$existing_wt" ]]; then
+                    path="$existing_wt"
+                    branch="$head_branch"
+                else
+                    path=$(wt_switch_path "$main_wt" "pr:$pr_number") || path=""
+                    if [[ -n "$path" && "$path" != "$main_wt" ]]; then
+                        branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+                    else
+                        path="$main_wt"
+                        branch="${head_branch:-$(cd "$main_wt" && gh pr view "$pr_number" \
+                            --json headRefName -q .headRefName 2>/dev/null || true)}"
+                    fi
+                fi
+                session_name=$(branch_to_session "$repo_name" "${branch:-pr_$pr_number}")
+                ;;
+            *)
+                exit 1
+                ;;
+        esac
+        break
+    else
+        exit 0
+    fi
+done
+
+[[ -z "$path" ]] && path="$main_wt"
+open_session "$path" "$session_name"

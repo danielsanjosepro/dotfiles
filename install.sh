@@ -18,6 +18,7 @@ CONFIG_LIST=(
 	rofi
 	wofi
 	fish
+	tmux
 )
 
 CONFIG_DIR="$HOME/.config"
@@ -48,9 +49,15 @@ link_path "$DOTFILES_DIR/zsh/.zshrc.pre-oh-my-zsh" "$HOME/.zshrc.pre-oh-my-zsh" 
 link_path "$DOTFILES_DIR/.gitconfig"               "$HOME/.gitconfig"           && echo "  .gitconfig"
 link_path "$DOTFILES_DIR/.bash_prompt"             "$HOME/.bash_prompt"         && echo "  .bash_prompt"
 
+mkdir -p "$HOME/.claude"
+link_path "$DOTFILES_DIR/claude/settings.json"     "$HOME/.claude/settings.json" && echo "  .claude/settings.json"
+
 echo "Linking bin..."
-link_path "$DOTFILES_DIR/bin/zellij_sessionizer"    "$LOCAL_BIN_DIR/zellij_sessionizer" && echo "  zellij_sessionizer"
-link_path "$DOTFILES_DIR/scripts/open-github.bash"  "$LOCAL_BIN_DIR/open-github.bash"   && echo "  open-github.bash"
+link_path "$DOTFILES_DIR/bin/zellij_sessionizer"    "$LOCAL_BIN_DIR/zellij_sessionizer"   && echo "  zellij_sessionizer"
+link_path "$DOTFILES_DIR/bin/tmux_sessionizer"      "$LOCAL_BIN_DIR/tmux_sessionizer"     && echo "  tmux_sessionizer"
+link_path "$DOTFILES_DIR/bin/claude-tmux-notify"    "$LOCAL_BIN_DIR/claude-tmux-notify"   && echo "  claude-tmux-notify"
+link_path "$DOTFILES_DIR/bin/tmux-claude-statusline" "$LOCAL_BIN_DIR/tmux-claude-statusline" && echo "  tmux-claude-statusline"
+link_path "$DOTFILES_DIR/scripts/open-github.bash"  "$LOCAL_BIN_DIR/open-github.bash"     && echo "  open-github.bash"
 
 echo "Done."
 

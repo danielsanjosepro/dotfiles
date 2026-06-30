@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+#
+# Emit a compact tmux status-bar segment showing Claude state per session.
+# Intended for use in status-right, e.g.:
+#
+#   set -g status-right '#($HOME/.local/bin/tmux-claude-statusline) %H:%M '
+#   set -g status-interval 5
+#
+# Markers:  ● orange = idle/awaiting   ● red = needs attention   ● blue = working
+# Names are shortened to just the branch part (the repo prefix is dropped) and
+# truncated so the bar stays compact. The session you are currently attached to
+# is shown bold/underlined. Stale state files (dead sessions) are pruned on the
+# fly.
+
+set -uo pipefail
+
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/tmux-sessionizer/state"
+MAXLEN=18   # max chars of the (shortened) name before truncating with an ellipsis
+[[ -d "$STATE_DIR" ]] || exit 0
+command -v tmux &>/dev/null || exit 0
+
+# Map of currently-live sessions (sanitized the same way the hook writes them).
+declare -A live=()
+while IFS= read -r s; do
+    [[ -z "$s" ]] && continue
+    live["${s//\//_}"]=1
+done < <(tmux list-sessions -F '#{session_name}' 2>/dev/null)
+
+# Session the *current* client is attached to (to highlight "you are here").
+current=$(tmux display-message -p '#{session_name}' 2>/dev/null)
+current="${current//\//_}"
+
+out=""
+shopt -s nullglob
+for f in "$STATE_DIR"/*; do
+    name=$(basename "$f")
+
+    # Prune markers for sessions that no longer exist.
+    if [[ -z "${live[$name]:-}" ]]; then
+        rm -f "$f"
+        continue
+    fi
+
+    state=$(<"$f")
+    case "$state" in
+        idle)      color="colour208" ;;   # orange
+        attention) color="colour196" ;;   # red
+        working)   color="colour39"  ;;   # blue
+        *)         continue ;;
+    esac
+
+    attrs="$color"
+    [[ "$name" == "$current" ]] && attrs="$attrs,bold,underscore"
+
+    # Drop the "repo__" prefix; keep only the branch part for a compact label.
+    label="${name##*__}"
+    (( ${#label} > MAXLEN )) && label="${label:0:MAXLEN-1}…"
+
+    out+="#[fg=$attrs]● $label#[default] "
+done
+
+# Trim a single trailing space for tidiness.
+printf '%s' "${out% }"

@@ -93,8 +93,12 @@ alias ec='z crisp_py && zs $PWD'
 
 alias g='bash $HOME/.local/bin/open-github.bash'
 
+# === TMUX SESSIONIZER ===
+alias ts='bash $HOME/.local/bin/tmux_sessionizer'
+
 # === BIND ===
-bind \cf "zellij_sessionizer.sh ."
+# ctrl-f: tmux sessionizer when inside tmux, zellij sessionizer otherwise.
+bind \cf 'if set -q TMUX; tmux_sessionizer; else; zellij_sessionizer; end'
 
 # # >>> mamba initialize >>>
 # # !! Contents within this block are managed by 'mamba shell init' !!

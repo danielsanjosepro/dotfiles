@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+#
+# Claude Code hook -> tmux sessionizer bridge.
+#
+# Records the Claude state for the tmux session the hook is running inside, so
+# the tmux_sessionizer picker and the tmux status bar can show a per-session
+# indicator:
+#
+#   idle      -> orange  (Stop hook: finished a turn, awaiting your input)
+#   working   -> blue    (UserPromptSubmit hook: you sent a prompt, Claude is busy)
+#   attention -> red     (Notification hook: needs permission / has been waiting)
+#   clear     ->         (SessionEnd hook: remove the marker)
+#
+# Wire it up in ~/.claude/settings.json, e.g.:
+#   "Stop":             [{ "hooks": [{ "type": "command",
+#                          "command": "\"$HOME/.local/bin/claude-tmux-notify\" idle" }] }]
+#   "UserPromptSubmit": [{ "hooks": [{ "type": "command",
+#                          "command": "\"$HOME/.local/bin/claude-tmux-notify\" working" }] }]
+#   "Notification":     [{ "hooks": [{ "type": "command",
+#                          "command": "\"$HOME/.local/bin/claude-tmux-notify\" attention" }] }]
+#   "SessionEnd":       [{ "hooks": [{ "type": "command",
+#                          "command": "\"$HOME/.local/bin/claude-tmux-notify\" clear" }] }]
+#
+# It is a no-op outside tmux, so it is safe to leave installed everywhere.
+
+set -uo pipefail
+
+state="${1:-}"
+[[ -z "$state" ]] && exit 0
+
+# Nothing to do if we are not inside tmux.
+[[ -z "${TMUX:-}" ]] && exit 0
+command -v tmux &>/dev/null || exit 0
+
+pane="${TMUX_PANE:-}"
+
+# Resolve the session this hook is running in (via the inherited pane id).
+session=$(tmux display-message ${pane:+-t "$pane"} -p '#{session_name}' 2>/dev/null) || exit 0
+[[ -z "$session" ]] && exit 0
+
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/tmux-sessionizer/state"
+mkdir -p "$STATE_DIR"
+
+# Slashes are the only session-name char that breaks the flat file layout.
+safe_session="${session//\//_}"
+f="$STATE_DIR/$safe_session"
+
+case "$state" in
+    clear)
+        rm -f "$f"
+        ;;
+    idle|working|attention)
+        printf '%s' "$state" > "$f"
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+
+# Force the status bar to repaint immediately instead of waiting for the
+# status-interval tick.
+tmux refresh-client -S 2>/dev/null
+
+# Desktop notification only for states worth surfacing, and only when you are
+# NOT currently looking at this pane (no point pinging the window you're in).
+notify_for=""
+case "$state" in
+    idle)      notify_for="Claude is idle — awaiting your response" ;;
+    attention) notify_for="Claude needs your attention" ;;
+esac
+
+if [[ -n "$notify_for" ]] && command -v notify-send &>/dev/null; then
+    focused=0
+    if [[ -n "$pane" ]]; then
+        read -r att wact pact < <(tmux display-message -t "$pane" -p \
+            '#{session_attached} #{window_active} #{pane_active}' 2>/dev/null)
+        if [[ "${att:-0}" -gt 0 && "${wact:-0}" == 1 && "${pact:-0}" == 1 ]]; then
+            focused=1
+        fi
+    fi
+
+    if [[ "$focused" -eq 0 ]]; then
+        urgency=normal
+        [[ "$state" == attention ]] && urgency=critical
+        notify-send --app-name=claude --urgency="$urgency" \
+            "● $session" "$notify_for"
+    fi
+fi
+
+exit 0
