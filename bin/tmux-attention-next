@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+# Cycle the attached client to the next tmux session awaiting your input.
+# "Awaiting" = Claude state idle or attention, as written by claude-tmux-notify
+# into $XDG_RUNTIME_DIR/tmux-sessionizer/state/<session>.
+#
+# Bound to prefix + Tab in tmux.conf.
+
+set -uo pipefail
+
+[[ -z "${TMUX:-}" ]] && exit 0
+command -v tmux &>/dev/null || exit 0
+
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/tmux-sessionizer/state"
+[[ -d "$STATE_DIR" ]] || { tmux display-message "no sessions awaiting input"; exit 0; }
+
+# safe_session (slashes -> _) back to the real, live session name.
+declare -A real=()
+while IFS= read -r s; do
+    real["${s//\//_}"]="$s"
+done < <(tmux list-sessions -F '#{session_name}' 2>/dev/null)
+
+shopt -s nullglob
+mapfile -t targets < <(
+    for f in "$STATE_DIR"/*; do
+        sess="${real[$(basename "$f")]:-}"
+        [[ -z "$sess" ]] && continue
+        case "$(<"$f")" in idle|attention) printf '%s\n' "$sess" ;; esac
+    done | sort
+)
+
+(( ${#targets[@]} == 0 )) && { tmux display-message "no sessions awaiting input"; exit 0; }
+
+current=$(tmux display-message -p '#{session_name}')
+
+# First target alphabetically after current; wrap to the first otherwise.
+next=""
+for s in "${targets[@]}"; do
+    [[ "$s" > "$current" ]] && { next="$s"; break; }
+done
+[[ -z "$next" ]] && next="${targets[0]}"
+
+tmux switch-client -t "$next"

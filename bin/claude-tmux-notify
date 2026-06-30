@@ -28,6 +28,20 @@ set -uo pipefail
 state="${1:-}"
 [[ -z "$state" ]] && exit 0
 
+# The Notification hook fires both for "needs permission" (truly blocked) and
+# for "waiting for your input" (just finished/idle). Read the hook's JSON from
+# stdin and split: only a permission message becomes the orange "blocked" state,
+# everything else is treated as plain green "idle". stdin is a pipe under a hook
+# and a tty on a manual run, so -t guards against blocking.
+if [[ "$state" == attention ]]; then
+    msg=""
+    [[ ! -t 0 ]] && msg=$(cat 2>/dev/null)
+    case "$msg" in
+        *permission*|*approve*) state=blocked ;;
+        *)                      state=idle ;;
+    esac
+fi
+
 # Nothing to do if we are not inside tmux.
 [[ -z "${TMUX:-}" ]] && exit 0
 command -v tmux &>/dev/null || exit 0
@@ -49,7 +63,7 @@ case "$state" in
     clear)
         rm -f "$f"
         ;;
-    idle|working|attention)
+    idle|working|blocked)
         printf '%s' "$state" > "$f"
         ;;
     *)
@@ -61,30 +75,50 @@ esac
 # status-interval tick.
 tmux refresh-client -S 2>/dev/null
 
-# Desktop notification only for states worth surfacing, and only when you are
-# NOT currently looking at this pane (no point pinging the window you're in).
-notify_for=""
+# --- desktop notification --------------------------------------------------
+# At most one popup per session, updated in place (--replace-id) and dismissed
+# the moment it is resolved: you send a new prompt, the session ends, or you are
+# already looking at the pane. Soft urgency + themed icons keep it unobtrusive.
+nid_file="$STATE_DIR/.nid_$safe_session"   # dot-prefixed: hidden from the * glob
+
+close_notification() {
+    [[ -f "$nid_file" ]] || return 0
+    local id; id=$(<"$nid_file"); rm -f "$nid_file"
+    [[ "$id" =~ ^[0-9]+$ ]] && command -v gdbus &>/dev/null \
+        && gdbus call --session --dest org.freedesktop.Notifications \
+            --object-path /org/freedesktop/Notifications \
+            --method org.freedesktop.Notifications.CloseNotification "$id" &>/dev/null
+    return 0
+}
+
 case "$state" in
-    idle)      notify_for="Claude is idle — awaiting your response" ;;
-    attention) notify_for="Claude needs your attention" ;;
+    idle)      body="finished — awaiting you";   urgency=low ;;
+    blocked)   body="blocked — needs permission"; urgency=normal ;;
+    *)         close_notification; exit 0 ;;   # working / clear -> resolved
 esac
 
-if [[ -n "$notify_for" ]] && command -v notify-send &>/dev/null; then
-    focused=0
-    if [[ -n "$pane" ]]; then
-        read -r att wact pact < <(tmux display-message -t "$pane" -p \
-            '#{session_attached} #{window_active} #{pane_active}' 2>/dev/null)
-        if [[ "${att:-0}" -gt 0 && "${wact:-0}" == 1 && "${pact:-0}" == 1 ]]; then
-            focused=1
-        fi
-    fi
+command -v notify-send &>/dev/null || exit 0
 
-    if [[ "$focused" -eq 0 ]]; then
-        urgency=normal
-        [[ "$state" == attention ]] && urgency=critical
-        notify-send --app-name=claude --urgency="$urgency" \
-            "● $session" "$notify_for"
+# Don't ping the pane you're already looking at; dismiss any stale popup instead.
+if [[ -n "$pane" ]]; then
+    read -r att wact pact < <(tmux display-message -t "$pane" -p \
+        '#{session_attached} #{window_active} #{pane_active}' 2>/dev/null)
+    if [[ "${att:-0}" -gt 0 && "${wact:-0}" == 1 && "${pact:-0}" == 1 ]]; then
+        close_notification
+        exit 0
     fi
 fi
+
+replace=()
+if [[ -f "$nid_file" ]]; then
+    pid=$(<"$nid_file")
+    [[ "$pid" =~ ^[0-9]+$ ]] && replace=(--replace-id "$pid")
+fi
+
+id=$(notify-send --app-name=claude --urgency="$urgency" --print-id \
+    "${replace[@]}" \
+    --hint=string:x-canonical-private-synchronous:"claude-$safe_session" \
+    "${session##*__}" "$body")
+[[ "$id" =~ ^[0-9]+$ ]] && printf '%s' "$id" > "$nid_file"
 
 exit 0

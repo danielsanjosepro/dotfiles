@@ -482,5 +482,34 @@
 #[stack-volumes]
 #    appname = "some_volume_notifiers"
 #    set_stack_tag = "volume"
-#
+
+# --- Claude Code session notifications (bin/claude-tmux-notify) -------------
+# Defined last so they override the urgency_* sections for appname "claude".
+# Calm dark card, generous padding, a coloured left accent per state:
+#   low = idle (finished, your turn, green)   normal = blocked (permission, orange).
+[claude]
+    appname = "claude"
+    format = "<b>%s</b>\n%b"
+    background = "#1b1d23"
+    foreground = "#e6e6e6"
+    highlight = "#7fb069"
+    frame_width = 2
+    frame_color = "#2b2e36"
+    padding = 14
+    horizontal_padding = 16
+    icon_position = off
+
+[claude_idle]
+    appname = "claude"
+    urgency = low
+    frame_color = "#7fb069"
+    timeout = 15
+
+[claude_blocked]
+    appname = "claude"
+    urgency = normal
+    frame_color = "#e08a3c"
+    foreground = "#f2e9d8"
+    timeout = 0
+
 # vim: ft=cfg

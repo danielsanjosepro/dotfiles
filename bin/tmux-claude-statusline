@@ -15,7 +15,7 @@
 set -uo pipefail
 
 STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/tmux-sessionizer/state"
-MAXLEN=18   # max chars of the (shortened) name before truncating with an ellipsis
+MAXLEN=32   # max chars of the (shortened) name before truncating with an ellipsis
 [[ -d "$STATE_DIR" ]] || exit 0
 command -v tmux &>/dev/null || exit 0
 
@@ -31,6 +31,7 @@ current=$(tmux display-message -p '#{session_name}' 2>/dev/null)
 current="${current//\//_}"
 
 out=""
+n=0
 shopt -s nullglob
 for f in "$STATE_DIR"/*; do
     name=$(basename "$f")
@@ -43,20 +44,25 @@ for f in "$STATE_DIR"/*; do
 
     state=$(<"$f")
     case "$state" in
-        idle)      color="colour208" ;;   # orange
-        attention) color="colour196" ;;   # red
-        working)   color="colour39"  ;;   # blue
-        *)         continue ;;
+        idle)    color="colour108" ;;   # green:  finished, your turn
+        blocked) color="colour208" ;;   # orange: needs permission
+        working) color="colour39"  ;;   # blue:   busy
+        *)       continue ;;
     esac
-
-    attrs="$color"
-    [[ "$name" == "$current" ]] && attrs="$attrs,bold,underscore"
 
     # Drop the "repo__" prefix; keep only the branch part for a compact label.
     label="${name##*__}"
     (( ${#label} > MAXLEN )) && label="${label:0:MAXLEN-1}…"
 
-    out+="#[fg=$attrs]● $label#[default] "
+    # Number prefix doubles as the prefix+<n> jump target (see tmux-claude-switch).
+    (( ++n ))
+
+    # Current session: greyish background highlight (no underline).
+    if [[ "$name" == "$current" ]]; then
+        out+="#[fg=$color,bg=colour240,bold] $n ● $label #[default] "
+    else
+        out+="#[fg=$color] $n ● $label #[default]"
+    fi
 done
 
 # Trim a single trailing space for tidiness.
