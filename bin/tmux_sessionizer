@@ -4,7 +4,7 @@
 # state indicator per session (orange = idle/awaiting, red = needs attention,
 # blue = working). The indicator is fed by the `claude-tmux-notify` hook.
 #
-# Each session created here is split: left pane = shell, right pane = `claude`.
+# Each session created here opens a single pane running `claude`.
 
 set -uo pipefail
 
@@ -126,16 +126,14 @@ wt_switch_path() {
     command wt -C "$main_wt" switch "$@" --execute bash -- -c 'pwd' 2>>/tmp/tmux_sessionizer.log
 }
 
-# Create the session (split: left shell, right claude) if it does not exist,
+# Create the session (single pane running claude) if it does not exist,
 # then attach or switch to it.
 open_session() {
     local path="$1" session_name="$2"
 
     if ! tmux has-session -t "=$session_name" 2>/dev/null; then
         tmux new-session -d -s "$session_name" -c "$path"
-        tmux split-window -h -t "=$session_name:" -c "$path"
-        tmux send-keys -t "=$session_name:.1" 'claude' C-m
-        tmux select-pane -t "=$session_name:.0"
+        tmux send-keys -t "=$session_name:" 'claude' C-m
     fi
 
     if [[ -z "${TMUX:-}" ]]; then
