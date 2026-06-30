@@ -1,0 +1,414 @@
+#!/usr/bin/env bash
+#
+# Shared fuzzy sessionizer for tmux and zellij, backed by worktrunk worktrees.
+#
+# Usage: sessionizer <tmux|zellij> [--repo]
+#
+# Normally invoked via the tmux_sessionizer / zellij_sessionizer wrappers.
+# The backend selects how sessions are opened and, for tmux, whether to show
+# the live Claude state dot (orange = idle, red = needs attention, blue =
+# working) fed by the `claude-tmux-notify` hook. tmux sessions open a single
+# pane running `claude`; zellij sessions use the default layout.
+
+set -uo pipefail
+
+BACKEND="${1:-}"
+case "$BACKEND" in
+    tmux|zellij) shift ;;
+    *) echo "usage: ${0##*/} <tmux|zellij> [--repo]" >&2; exit 2 ;;
+esac
+
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/tmux-sessionizer/state"
+
+# pre-commit's post-checkout hook (installed globally in some repos) fails
+# with exit 1 when the new worktree has no .pre-commit-config.yaml, which
+# in turn makes `git worktree add` return nonzero and breaks `wt switch
+# --create`. Telling pre-commit to allow a missing config restores the
+# earlier silently-skip behavior.
+export PRE_COMMIT_ALLOW_NO_CONFIG=1
+
+# Return the main (primary) worktree root for any path within the repo.
+# git worktree list always shows the main worktree first.
+main_worktree_of() {
+    git -C "$1" worktree list --porcelain | awk '/^worktree/{print $2; exit}'
+}
+
+# Sanitize a string into a valid session name fragment.
+sessionize_name() {
+    echo "$1" | tr '/. ' '___'
+}
+
+# Turn a repo + branch name into a valid session name. Names avoid '.' and
+# ':' (tmux) and are capped so the resulting zellij unix socket path stays
+# under the kernel's 108-byte sun_path limit. When the name would overflow,
+# the branch portion is truncated and a short hash of the original branch is
+# appended to keep the name unique.
+branch_to_session() {
+    local repo_name="$1" branch_name="$2"
+    local max_len=60
+    local repo_clean branch_clean session
+    repo_clean=$(sessionize_name "$repo_name")
+    branch_clean=$(sessionize_name "$branch_name")
+    session="${repo_clean}__${branch_clean}"
+
+    if (( ${#session} > max_len )); then
+        local hash budget
+        hash=$(printf '%s' "$branch_name" | sha1sum | cut -c1-7)
+        budget=$(( max_len - ${#repo_clean} - 2 - 1 - 7 ))
+        (( budget < 1 )) && budget=1
+        branch_clean="${branch_clean:0:budget}"
+        session="${repo_clean}__${branch_clean}_${hash}"
+    fi
+
+    printf '%s\n' "$session"
+}
+
+# Per-repo MRU file path. Keyed by sha1 of the main worktree path so repos
+# with the same basename don't collide.
+mru_file() {
+    local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/${BACKEND}_sessionizer"
+    mkdir -p "$cache_dir" 2>/dev/null || return 1
+    local hash
+    hash=$(printf '%s' "$1" | sha1sum | cut -c1-12)
+    printf '%s/%s.mru' "$cache_dir" "$hash"
+}
+
+# Prepend a branch name to the per-repo MRU list, deduped and capped at 100.
+record_mru() {
+    local main_wt="$1" branch="$2"
+    [[ -z "$branch" ]] && return
+    local file
+    file=$(mru_file "$main_wt") || return
+    local tmp
+    tmp=$(mktemp) || return
+    {
+        printf '%s\n' "$branch"
+        [[ -f "$file" ]] && grep -vxF "$branch" "$file"
+    } | head -n 100 > "$tmp"
+    mv "$tmp" "$file"
+}
+
+# ANSI-colored dot reflecting the recorded Claude state for a session name,
+# followed by a space; empty (two spaces) when there is no state. tmux only.
+state_marker() {
+    local session="${1//\//_}"
+    local f="$STATE_DIR/$session"
+    [[ -r "$f" ]] || { printf '  '; return; }
+    case "$(<"$f")" in
+        idle)      printf '\033[38;5;208m●\033[0m ' ;;  # orange
+        attention) printf '\033[38;5;196m●\033[0m ' ;;  # red
+        working)   printf '\033[38;5;39m●\033[0m '  ;;  # blue
+        *)         printf '  ' ;;
+    esac
+}
+
+# Entry prefix: the Claude-state dot for tmux, nothing for zellij.
+marker_for() {
+    [[ "$BACKEND" == tmux ]] || return 0
+    state_marker "$1"
+}
+
+# Pick a repository root.
+pick_repo() {
+    {
+        [[ -d "$HOME/dotfiles" ]] && printf '%s\n' "$HOME/dotfiles"
+
+        if command -v fd &>/dev/null; then
+            fd . "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
+                --min-depth 1 --max-depth 1 --type d 2>/dev/null
+        else
+            find "$HOME/repos" "$HOME/git" "$HOME/ros2_ws/src" \
+                -mindepth 1 -maxdepth 1 -type d 2>/dev/null
+        fi
+    } | awk '!seen[$0]++' | fzf --prompt='repo> ' --header='Select a repository'
+}
+
+# Emit one tab-separated fzf entry for a branch, prefixed with its marker.
+# Renders as [wt] when a linked worktree exists, otherwise [branch].
+emit_branch_entry() {
+    local repo_name="$1" branch="$2" wt="$3"
+    local marker
+    marker=$(marker_for "$(branch_to_session "$repo_name" "$branch")")
+    if [[ -n "$wt" ]]; then
+        printf '%s[wt]     %s\tworktree\t%s\n' "$marker" "$branch" "$wt"
+    else
+        printf '%s[branch] %s\tbranch\t%s\n' "$marker" "$branch" "$branch"
+    fi
+}
+
+# Build the tab-separated fzf entry list for a given main worktree path.
+# Each line: DISPLAY \t TYPE \t DATA. MRU branches come first (in MRU order),
+# then the rest by committerdate, then open PRs.
+build_entries() {
+    local main_wt="$1" repo_name="$2"
+
+    # Map branch -> linked worktree path (excluding the main worktree, which
+    # is implicit via the [branch] entry for the default branch).
+    declare -A wt_path
+    local cur_path="" cur_branch=""
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^worktree[[:space:]](.+)$ ]]; then
+            cur_path="${BASH_REMATCH[1]}"
+            cur_branch=""
+        elif [[ "$line" =~ ^branch[[:space:]]refs/heads/(.+)$ ]]; then
+            cur_branch="${BASH_REMATCH[1]}"
+            if [[ "$cur_path" != "$main_wt" ]]; then
+                wt_path["$cur_branch"]="$cur_path"
+            fi
+        fi
+    done < <(git -C "$main_wt" worktree list --porcelain)
+
+    # Emit MRU branches first (in MRU order), then the rest by committerdate.
+    declare -A emitted
+    local mru branch
+    mru=$(mru_file "$main_wt")
+    if [[ -n "$mru" && -f "$mru" ]]; then
+        while IFS= read -r branch; do
+            [[ -z "$branch" || -n "${emitted[$branch]:-}" ]] && continue
+            git -C "$main_wt" show-ref --verify --quiet "refs/heads/$branch" || continue
+            emitted["$branch"]=1
+            emit_branch_entry "$repo_name" "$branch" "${wt_path[$branch]:-}"
+        done < "$mru"
+    fi
+
+    while IFS= read -r branch; do
+        [[ -n "${emitted[$branch]:-}" ]] && continue
+        emit_branch_entry "$repo_name" "$branch" "${wt_path[$branch]:-}"
+    done < <(git -C "$main_wt" for-each-ref refs/heads --sort=-committerdate --format='%(refname:short)')
+
+    # Open PRs — requires gh. Embed headRefName so we can short-circuit to an
+    # existing worktree without paying the `wt switch pr:N` round-trip.
+    if command -v gh &>/dev/null; then
+        (cd "$main_wt" && gh pr list --json number,title,headRefName \
+            --jq '.[] | "[pr]     #\(.number) \(.title)\tpr\t\(.number):\(.headRefName)"' 2>/dev/null) \
+        | while IFS=$'\t' read -r disp typ data; do
+            local head_branch="${data#*:}"
+            printf '%s%s\t%s\t%s\n' \
+                "$(marker_for "$(branch_to_session "$repo_name" "$head_branch")")" \
+                "$disp" "$typ" "$data"
+        done || true
+    fi
+}
+
+# Run `wt switch` and return the resulting worktree path via --execute.
+wt_switch_path() {
+    local main_wt="$1"
+    shift
+    command wt -C "$main_wt" switch "$@" --execute bash -- -c 'pwd' 2>>"/tmp/${BACKEND}_sessionizer.log"
+}
+
+# Confirm with a small fzf yes/no popup, then remove the worktree and its
+# branch. Falls back to a force-remove confirmation when the worktree has
+# local changes.
+delete_worktree() {
+    local main_wt="$1" wt="$2"
+    local label="${wt/#$HOME/~}"
+    local branch answer
+    branch=$(git -C "$wt" rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+    answer=$(printf 'No\nYes' | fzf --prompt="Delete worktree $label? " \
+        --header="This removes the worktree directory and branch '${branch:-?}'" \
+        --height=20% --layout=reverse) || return
+    [[ "$answer" != "Yes" ]] && return
+
+    if ! git -C "$main_wt" worktree remove "$wt" 2>/dev/null; then
+        answer=$(printf 'No\nYes' | fzf \
+            --prompt="Worktree $label is dirty or locked. Force delete? " \
+            --header=$'\e[31mUncommitted changes will be lost\e[0m' \
+            --ansi --height=20% --layout=reverse) || return
+        [[ "$answer" != "Yes" ]] && return
+        git -C "$main_wt" worktree remove --force "$wt" || return
+    fi
+
+    [[ -n "$branch" && "$branch" != "HEAD" ]] && \
+        git -C "$main_wt" branch -D "$branch" >/dev/null 2>&1
+}
+
+# Create or attach to a session for the active backend.
+open_session() {
+    local path="$1" session_name="$2"
+
+    if [[ "$BACKEND" == tmux ]]; then
+        if ! tmux has-session -t "=$session_name" 2>/dev/null; then
+            tmux new-session -d -s "$session_name" -c "$path"
+            tmux send-keys -t "=$session_name:" 'claude' C-m
+        fi
+        if [[ -z "${TMUX:-}" ]]; then
+            exec tmux attach -t "=$session_name"
+        else
+            tmux switch-client -t "=$session_name"
+        fi
+    else
+        if [[ -z "${ZELLIJ:-}" ]]; then
+            cd "$path" && exec zellij attach "$session_name" -c
+        else
+            # Running inside zellij: switch the current client to the target
+            # session instead of nesting an attached session.
+            zellij action switch-session --cwd "$path" "$session_name"
+        fi
+    fi
+}
+
+# ---- Main ----
+
+export -f pick_repo
+
+force_repo_picker=false
+if [[ "${1:-}" == "--repo" || "${1:-}" == "--pick-repo" ]]; then
+    force_repo_picker=true
+fi
+
+if [[ "$force_repo_picker" == true ]]; then
+    git_root=$(pick_repo)
+else
+    git_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+    if [[ -z "$git_root" ]]; then
+        git_root=$(pick_repo)
+    fi
+fi
+
+[[ -z "$git_root" ]] && exit 0
+
+# Tmpfiles signal ctrl-n new-branch creation, ctrl-r repo switching and
+# ctrl-d worktree deletion.
+tmpfile=$(mktemp /tmp/sz_branch.XXXXXX)
+repo_tmpfile=$(mktemp /tmp/sz_repo.XXXXXX)
+delete_tmpfile=$(mktemp /tmp/sz_delete.XXXXXX)
+trap 'rm -f "$tmpfile" "$repo_tmpfile" "$delete_tmpfile"' EXIT
+
+header_normal='enter: switch  ctrl-n: create new branch  ctrl-r: change repo  ctrl-d: delete worktree'
+header_warn=$'\e[33m⚠  type a branch name first, then ctrl-n\e[0m'
+header_no_delete=$'\e[33m⚠  only [wt] entries can be deleted\e[0m'
+
+while true; do
+    main_wt=$(main_worktree_of "$git_root")
+    repo_name=$(basename "$main_wt")
+    : > "$tmpfile"
+    : > "$repo_tmpfile"
+    : > "$delete_tmpfile"
+
+    selected=$(build_entries "$main_wt" "$repo_name" | SHELL=/bin/bash fzf \
+        --delimiter=$'\t' \
+        --with-nth=1 \
+        --ansi \
+        --bind "ctrl-n:transform:
+            if [[ -z \$FZF_QUERY ]]; then
+                echo 'change-header($header_warn)'
+            else
+                echo \"execute-silent(printf '%s' {q} > $tmpfile)+accept\"
+            fi
+        " \
+        --bind "ctrl-r:execute-silent(printf '%s' '__PICK_REPO__' > $repo_tmpfile)+accept" \
+        --bind "ctrl-d:transform:
+            if [[ \$(printf '%s' {} | cut -f2) == worktree ]]; then
+                echo \"execute-silent(printf '%s' {} | cut -f3 > $delete_tmpfile)+accept\"
+            else
+                echo 'change-header($header_no_delete)'
+            fi
+        " \
+        --bind "change:change-header($header_normal)" \
+        --header="$header_normal" \
+        --preview="
+            type=\$(printf '%s' {} | cut -f2)
+            data=\$(printf '%s' {} | cut -f3)
+            if [[ \"\$type\" == pr ]]; then
+                pr_num=\${data%%:*}
+                output=\$(cd \"$main_wt\" && gh pr view \"\$pr_num\" 2>/dev/null || echo \"PR #\$pr_num\")
+                if command -v bat &>/dev/null; then
+                    printf '%s' \"\$output\" | bat --language=markdown --color=always --style=plain
+                else
+                    printf '%s\n' \"\$output\"
+                fi
+            else
+                git -C \"$main_wt\" log --oneline --color=always -12 \"\$data\" 2>/dev/null || echo \"\$data\"
+            fi
+        " \
+        --preview-window=right:50%) || true
+
+    delete_target=$(cat "$delete_tmpfile" 2>/dev/null)
+    if [[ -n "$delete_target" ]]; then
+        delete_worktree "$main_wt" "$delete_target"
+        continue
+    fi
+
+    repo_switch=$(cat "$repo_tmpfile" 2>/dev/null)
+    if [[ "$repo_switch" == '__PICK_REPO__' ]]; then
+        repo_switch=$(pick_repo)
+        if [[ -n "$repo_switch" ]]; then
+            git_root="$repo_switch"
+        fi
+        continue
+    fi
+
+    new_branch=$(cat "$tmpfile" 2>/dev/null)
+
+    if [[ -n "$new_branch" ]]; then
+        path=$(wt_switch_path "$main_wt" --create "$new_branch") || path="$main_wt"
+        session_name=$(branch_to_session "$repo_name" "$new_branch")
+        selected_branch="$new_branch"
+        break
+    elif [[ -n "$selected" ]]; then
+        item_type=$(cut -f2 <<< "$selected")
+        item_data=$(cut -f3 <<< "$selected")
+
+        case "$item_type" in
+            worktree)
+                path="$item_data"
+                branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || basename "$path")
+                session_name=$(branch_to_session "$repo_name" "$branch")
+                selected_branch="$branch"
+                ;;
+            branch)
+                path=$(wt_switch_path "$main_wt" "$item_data") || path="$main_wt"
+                session_name=$(branch_to_session "$repo_name" "$item_data")
+                selected_branch="$item_data"
+                ;;
+            pr)
+                if [[ "$item_data" == *:* ]]; then
+                    pr_number="${item_data%%:*}"
+                    head_branch="${item_data#*:}"
+                else
+                    pr_number="$item_data"
+                    head_branch=""
+                fi
+
+                # Fast path: if a worktree already exists for the PR's head
+                # branch, jump straight to it instead of invoking `wt switch`.
+                existing_wt=""
+                if [[ -n "$head_branch" ]]; then
+                    existing_wt=$(git -C "$main_wt" worktree list --porcelain | \
+                        awk -v ref="refs/heads/$head_branch" '
+                            $1 == "worktree" { wt = $2 }
+                            $1 == "branch" && $2 == ref { print wt; exit }
+                        ')
+                fi
+
+                if [[ -n "$existing_wt" ]]; then
+                    path="$existing_wt"
+                    branch="$head_branch"
+                else
+                    path=$(wt_switch_path "$main_wt" "pr:$pr_number") || path=""
+                    if [[ -n "$path" && "$path" != "$main_wt" ]]; then
+                        branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+                    else
+                        path="$main_wt"
+                        branch="${head_branch:-$(cd "$main_wt" && gh pr view "$pr_number" \
+                            --json headRefName -q .headRefName 2>/dev/null || true)}"
+                    fi
+                fi
+                session_name=$(branch_to_session "$repo_name" "${branch:-pr_$pr_number}")
+                selected_branch="${branch:-}"
+                ;;
+            *)
+                exit 1
+                ;;
+        esac
+        break
+    else
+        exit 0
+    fi
+done
+
+[[ -z "$path" ]] && path="$main_wt"
+record_mru "$main_wt" "${selected_branch:-}"
+open_session "$path" "$session_name"
