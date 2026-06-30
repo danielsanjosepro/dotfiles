@@ -59,6 +59,12 @@ mkdir -p "$STATE_DIR"
 safe_session="${session//\//_}"
 f="$STATE_DIR/$safe_session"
 
+# Skip redundant updates: PreToolUse fires "working" on every tool call, so if
+# the state is unchanged don't rewrite, refresh, or re-notify.
+if [[ "$state" != clear && -f "$f" && "$(<"$f")" == "$state" ]]; then
+    exit 0
+fi
+
 case "$state" in
     clear)
         rm -f "$f"
