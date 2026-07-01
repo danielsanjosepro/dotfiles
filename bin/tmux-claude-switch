@@ -25,7 +25,7 @@ shopt -s nullglob
 for f in "$STATE_DIR"/*; do
     sess="${real[$(basename "$f")]:-}"
     [[ -z "$sess" ]] && continue
-    case "$(<"$f")" in idle|attention|working) ;; *) continue ;; esac
+    case "$(<"$f")" in idle|blocked|working) ;; *) continue ;; esac
     if (( ++n == idx )); then
         tmux switch-client -t "$sess"
         exit 0
