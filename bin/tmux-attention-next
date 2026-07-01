@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Cycle the attached client to the next tmux session awaiting your input.
-# "Awaiting" = Claude state idle or attention, as written by claude-tmux-notify
+# "Awaiting" = Claude state idle or blocked, as written by claude-tmux-notify
 # into $XDG_RUNTIME_DIR/tmux-sessionizer/state/<session>.
 #
 # Bound to prefix + Tab in tmux.conf.
@@ -25,7 +25,7 @@ mapfile -t targets < <(
     for f in "$STATE_DIR"/*; do
         sess="${real[$(basename "$f")]:-}"
         [[ -z "$sess" ]] && continue
-        case "$(<"$f")" in idle|attention) printf '%s\n' "$sess" ;; esac
+        case "$(<"$f")" in idle|blocked) printf '%s\n' "$sess" ;; esac
     done | sort
 )
 
